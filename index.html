@@ -8,10 +8,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@300;400;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0d1117; --sf: #161b22; --sf2: #1c2333; --bd: #30363d;
-  --ac: #d4a853; --ac2: #c08840; --gr: #3fb950; --rd: #f85149;
-  --bl: #58a6ff; --tx: #e6edf3; --tm: #8b949e; --td: #6e7681;
-  --pc: #58a6ff; --fc: #3fb950; --mc: #d4a853; --vc: #bc8cff;
+  /* ── Theme 4: Slate Blue-Gray ── */
+  --bg:  #f1f4f8;   /* page background — light slate */
+  --sf:  #ffffff;   /* card surface */
+  --sf2: #e8edf4;   /* inner surface */
+  --bd:  #cbd5e1;   /* border */
+  --ac:  #6366f1;   /* accent — indigo */
+  --ac2: #4f46e5;   /* accent dark */
+  --gr:  #16a34a;   /* green */
+  --rd:  #dc2626;   /* red */
+  --bl:  #3b82f6;   /* blue */
+  --tx:  #1e2a3a;   /* text primary */
+  --tm:  #475569;   /* text muted */
+  --td:  #94a3b8;   /* text dim */
+  --pc:  #3b82f6;
+  --fc:  #16a34a;
+  --mc:  #f59e0b;
+  --vc:  #8b5cf6;
+  /* Hero dark header */
+  --hero-bg:  #1e2a3a;
+  --hero-bg2: #253345;
+  --hero-tx:  #e2e8f0;
+  --hero-tm:  #64748b;
+  --hero-ac:  #818cf8;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(--tx); min-height: 100vh; direction: rtl; }
@@ -24,27 +43,28 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
    WIZARD SCREEN
 ══════════════════════════════ */
 .wiz-hero {
-  background: linear-gradient(160deg, #0d1117 0%, #161b22 60%, #0d1117 100%);
+  background: linear-gradient(160deg, #1e2a3a 0%, #253345 60%, #1e2a3a 100%);
   padding: 40px 24px 32px; text-align: center; position: relative; overflow: hidden;
-  border-bottom: 1px solid var(--bd);
+  border-bottom: 1px solid #2d3f55;
 }
 .wiz-hero::before {
   content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 30% 60%, rgba(212,168,83,.1) 0%, transparent 55%),
-              radial-gradient(ellipse at 70% 40%, rgba(88,166,255,.07) 0%, transparent 55%);
+  background: radial-gradient(ellipse at 30% 60%, rgba(99,102,241,.12) 0%, transparent 55%),
+              radial-gradient(ellipse at 70% 40%, rgba(59,130,246,.08) 0%, transparent 55%);
   pointer-events: none;
 }
 .wiz-hero h1 {
   font-family: 'Frank Ruhl Libre', serif; font-size: clamp(26px, 5vw, 48px);
   font-weight: 900; margin-bottom: 8px;
-  background: linear-gradient(135deg, #e6edf3 0%, #d4a853 100%);
+  background: linear-gradient(135deg, #e2e8f0 0%, #818cf8 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.wiz-hero p { color: var(--tm); font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+.wiz-hero p { color: #64748b; font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.6; }
 
 /* Progress */
 .progress-bar {
   display: flex; align-items: center; max-width: 480px; margin: 0 auto 28px; padding: 0 24px;
+  background: transparent;
 }
 .pb-step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
 .pb-step:not(:last-child)::after {
@@ -57,13 +77,13 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
   background: var(--sf2); display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 800; z-index: 1; transition: all .3s; color: var(--td);
 }
-.pb-step.done .pb-dot  { border-color: var(--ac); color: var(--ac); background: rgba(212,168,83,.12); }
-.pb-step.active .pb-dot { border-color: var(--ac); background: var(--ac); color: #000; }
+.pb-step.done .pb-dot  { border-color: var(--ac); color: var(--ac); background: rgba(99,102,241,.12); }
+.pb-step.active .pb-dot { border-color: var(--ac); background: var(--ac); color: #fff; }
 .pb-lbl { font-size: 10px; color: var(--td); margin-top: 4px; font-weight: 600; text-align: center; }
 .pb-step.active .pb-lbl, .pb-step.done .pb-lbl { color: var(--tm); }
 
 /* Step cards */
-.wiz-body { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; }
+.wiz-body { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; background: transparent; }
 .step-panel { display: none; animation: fadeUp .3s ease; }
 .step-panel.active { display: block; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
@@ -90,11 +110,12 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
 .choice {
   padding: 14px 13px; border-radius: 11px; border: 1.5px solid var(--bd);
-  background: var(--sf2); cursor: pointer; transition: all .2s;
+  background: var(--sf); cursor: pointer; transition: all .2s;
   display: flex; align-items: flex-start; gap: 11px; text-align: right;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-.choice:hover { border-color: rgba(212,168,83,.5); background: rgba(212,168,83,.04); }
-.choice.selected { border-color: var(--ac); background: rgba(212,168,83,.09); }
+.choice:hover { border-color: rgba(99,102,241,.5); background: rgba(99,102,241,.04); }
+.choice.selected { border-color: var(--ac); background: rgba(99,102,241,.08); }
 .choice-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
 .choice-label { font-size: 14px; font-weight: 700; line-height: 1.3; }
 .choice-sub { font-size: 12px; color: var(--td); margin-top: 3px; line-height: 1.4; }
@@ -113,23 +134,23 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
   font-size: 15px; font-weight: 800; padding: 12px 28px; cursor: pointer;
   transition: all .2s; display: flex; align-items: center; gap: 8px;
 }
-.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(212,168,83,.35); }
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,.35); }
 .btn-next:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* ── LOADING SCREEN ── */
 .loading-screen {
-  display: none; position: fixed; inset: 0; background: var(--bg);
+  display: none; position: fixed; inset: 0; background: #1e2a3a;
   z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 0;
 }
 .loading-screen.active { display: flex; }
 .loading-brain { font-size: 52px; margin-bottom: 16px; animation: breathe 2s ease-in-out infinite; }
 @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-.loading-title { font-family: 'Frank Ruhl Libre', serif; font-size: 24px; font-weight: 800; margin-bottom: 6px; }
-.loading-sub { color: var(--tm); font-size: 14px; margin-bottom: 32px; }
+.loading-title { font-family: 'Frank Ruhl Libre', serif; font-size: 24px; font-weight: 800; margin-bottom: 6px; color: #e2e8f0; }
+.loading-sub { color: #64748b; font-size: 14px; margin-bottom: 32px; }
 .loading-steps { display: flex; flex-direction: column; gap: 10px; width: 320px; }
-.ls { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: var(--sf); border: 1px solid var(--bd); border-radius: 10px; }
+.ls { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #253345; border: 1px solid #2d3f55; border-radius: 10px; }
 .ls-icon { font-size: 19px; width: 26px; text-align: center; flex-shrink: 0; }
-.ls-text { flex: 1; font-size: 13px; font-weight: 600; }
+.ls-text { flex: 1; font-size: 13px; font-weight: 600; color: #cbd5e1; }
 .ls-badge { font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 700; }
 .ls-badge.wait { background: rgba(139,148,158,.12); color: var(--td); }
 .ls-badge.go { background: rgba(212,168,83,.15); color: var(--ac); animation: pulse 1.2s infinite; }
@@ -140,28 +161,29 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
    RESULTS SCREEN
 ══════════════════════════════ */
 .res-header {
-  background: var(--sf); border-bottom: 1px solid var(--bd);
+  background: #1e2a3a; border-bottom: 1px solid #2d3f55;
   padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 50;
 }
 .res-back-btn {
-  background: transparent; border: 1px solid var(--bd); border-radius: 8px;
-  color: var(--tm); font-family: 'Assistant', sans-serif; font-size: 13px;
+  background: transparent; border: 1px solid #2d3f55; border-radius: 8px;
+  color: #94a3b8; font-family: 'Assistant', sans-serif; font-size: 13px;
   font-weight: 600; padding: 7px 14px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
 }
-.res-back-btn:hover { border-color: var(--ac); color: var(--ac); }
-.res-header-title { font-family: 'Frank Ruhl Libre', serif; font-size: 17px; font-weight: 700; flex: 1; }
+.res-back-btn:hover { border-color: #6366f1; color: #818cf8; }
+.res-header-title { font-family: 'Frank Ruhl Libre', serif; font-size: 17px; font-weight: 700; flex: 1; color: #e2e8f0; }
 
-.res-body { max-width: 860px; margin: 0 auto; padding: 22px 16px 48px; }
+.res-body { max-width: 860px; margin: 0 auto; padding: 22px 16px 48px; background: var(--bg); min-height: calc(100vh - 60px); }
 
 /* Scenario pills */
 .sc-pills { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
 .sc-pill {
   padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--bd);
-  background: var(--sf2); color: var(--tm); font-family: 'Assistant', sans-serif;
+  background: var(--sf); color: var(--tm); font-family: 'Assistant', sans-serif;
   font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 .sc-pill:hover { border-color: var(--ac); }
-.sc-pill.active { border-color: var(--ac); background: rgba(212,168,83,.1); color: var(--ac); }
+.sc-pill.active { border-color: var(--ac); background: rgba(99,102,241,.1); color: var(--ac); }
 .sc-pill.winner { border-color: rgba(63,185,80,.4); color: var(--gr); }
 .sc-pill.winner.active { background: rgba(63,185,80,.08); }
 
@@ -174,7 +196,7 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
   display: flex; align-items: center; gap: 10px; background: var(--sf);
   border: 1px solid var(--bd); border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;
 }
-.bank-badge.winner-bank { border-color: rgba(63,185,80,.4); background: rgba(63,185,80,.04); }
+.bank-badge.winner-bank { border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.04); }
 .bb-logo { font-size: 28px; }
 .bb-info { flex: 1; }
 .bb-name { font-weight: 800; font-size: 16px; }
@@ -274,13 +296,34 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .skeleton { background: linear-gradient(90deg, var(--sf2) 25%, var(--bd) 50%, var(--sf2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 12px; margin: 4px 0; }
 @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
 
-.disc { padding: 14px 16px; background: var(--sf); border-top: 1px solid var(--bd); font-size: 11px; color: var(--td); line-height: 1.6; text-align: center; }
+.disc { padding: 14px 16px; background: #1e2a3a; border-top: 1px solid #2d3f55; font-size: 11px; color: #475569; line-height: 1.6; text-align: center; }
 
-/* ── DATA STATUS BAR ── */
+/* ── BIDIRECTIONAL CALCULATOR ── */
+.bidir-card { background: var(--sf2); border: 1px solid var(--bd); border-radius: 10px; padding: 16px; }
+.bidir-modes { display: flex; gap: 7px; margin-bottom: 14px; }
+.bidir-mode { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--bd); background: var(--sf); font-family: 'Assistant',sans-serif; font-size: 12px; font-weight: 600; color: var(--tm); cursor: pointer; transition: all .15s; }
+.bidir-mode:hover { border-color: var(--ac); }
+.bidir-mode.active { background: rgba(99,102,241,.1); border-color: var(--ac); color: var(--ac); }
+.bidir-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.bidir-lbl { font-size: 12px; color: var(--tm); min-width: 80px; flex-shrink: 0; }
+.bidir-slider { flex: 1; accent-color: var(--ac); }
+.bidir-val { font-size: 13px; font-weight: 700; color: var(--ac); min-width: 72px; text-align: left; }
+.bidir-results { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 12px 0 10px; }
+.bidir-metric { background: var(--sf); border: 1px solid var(--bd); border-radius: 8px; padding: 10px; text-align: center; }
+.bidir-metric.accent { border-color: var(--ac); background: rgba(99,102,241,.06); }
+.bm-l { font-size: 10px; color: var(--tm); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px; }
+.bidir-metric.accent .bm-l { color: var(--ac); }
+.bm-v { font-size: 17px; font-weight: 800; font-family: 'Frank Ruhl Libre',serif; color: var(--tx); }
+.bidir-metric.accent .bm-v { color: var(--ac); }
+.bidir-pti-row { display: flex; align-items: center; gap: 10px; }
+.bidir-pti-track { flex: 1; height: 5px; border-radius: 3px; background: var(--bd); overflow: hidden; }
+.bidir-pti-fill { height: 100%; border-radius: 3px; transition: width .3s, background .3s; }
+.bidir-pti-val { font-size: 13px; font-weight: 700; min-width: 44px; text-align: left; }
 .data-status-bar {
   background: var(--sf); border: 1px solid var(--bd); border-radius: 10px;
   padding: 12px 16px; margin-bottom: 16px;
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 .dsb-indicator {
   width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
@@ -355,7 +398,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 
 /* ── ADVISOR CTA ── */
 .advisor-cta {
-  background: linear-gradient(135deg, #1a1400 0%, #161b22 50%, #001a0d 100%);
+  background: linear-gradient(135deg, #1e2a3a 0%, #253345 50%, #1a2535 100%);
   border: 1.5px solid rgba(212,168,83,.35);
   border-radius: 16px; padding: 28px 24px; margin: 28px 0 8px;
   position: relative; overflow: hidden;
@@ -363,8 +406,8 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .advisor-cta::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 20% 50%, rgba(212,168,83,.08) 0%, transparent 55%),
-              radial-gradient(ellipse at 80% 50%, rgba(63,185,80,.06) 0%, transparent 55%);
+  background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,.1) 0%, transparent 55%),
+              radial-gradient(ellipse at 80% 50%, rgba(59,130,246,.07) 0%, transparent 55%);
   pointer-events: none;
 }
 .advisor-cta-inner { position: relative; z-index: 1; }
@@ -376,15 +419,15 @@ tr:hover td { background: rgba(255,255,255,.02); }
   display: flex; align-items: center; justify-content: center;
   font-size: 26px; flex-shrink: 0;
 }
-.advisor-cta-title { font-family: 'Frank Ruhl Libre', serif; font-size: 20px; font-weight: 900; margin-bottom: 5px; }
-.advisor-cta-sub { font-size: 13px; color: var(--tm); line-height: 1.6; max-width: 440px; }
+.advisor-cta-title { font-family: 'Frank Ruhl Libre', serif; font-size: 20px; font-weight: 900; margin-bottom: 5px; color: #e2e8f0; }
+.advisor-cta-sub { font-size: 13px; color: #94a3b8; line-height: 1.6; max-width: 440px; }
 .price-tag {
   display: flex; align-items: center; gap: 10px;
-  background: rgba(212,168,83,.08); border: 1px solid rgba(212,168,83,.25);
+  background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.25);
   border-radius: 10px; padding: 10px 16px; margin-bottom: 18px; flex-wrap: wrap;
 }
 .price-orig { font-size: 13px; color: var(--td); text-decoration: line-through; }
-.price-new { font-family: 'Frank Ruhl Libre', serif; font-size: 26px; font-weight: 900; color: var(--ac); }
+.price-new { font-family: 'Frank Ruhl Libre', serif; font-size: 26px; font-weight: 900; color: #818cf8; }
 .price-label { font-size: 12px; color: var(--tm); }
 .price-badge {
   background: rgba(63,185,80,.15); border: 1px solid rgba(63,185,80,.3);
@@ -413,7 +456,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .cta-btn-secondary:hover { border-color: var(--ac); color: var(--ac); }
 .advisor-guarantee {
   display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: var(--td); margin-top: 14px; justify-content: center;
+  font-size: 12px; color: #64748b; margin-top: 14px; justify-content: center;
 }
 
 /* Modal */
@@ -448,7 +491,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .modal-submit {
   width: 100%; background: linear-gradient(135deg, var(--ac), var(--ac2));
-  color: #000; border: none; border-radius: 9px;
+  color: #fff; border: none; border-radius: 9px;
   font-family: 'Assistant', sans-serif; font-size: 15px; font-weight: 800;
   padding: 13px; cursor: pointer; transition: all .2s; margin-top: 4px;
 }
@@ -489,8 +532,8 @@ tr:hover td { background: rgba(255,255,255,.02); }
     <div class="progress-bar" id="progress-bar">
       <div class="pb-step active" id="pb1"><div class="pb-dot">1</div><div class="pb-lbl">הלוואה</div></div>
       <div class="pb-step" id="pb2"><div class="pb-dot">2</div><div class="pb-lbl">מטרות</div></div>
-      <div class="pb-step" id="pb3"><div class="pb-dot">3</div><div class="pb-lbl">סיכון</div></div>
-      <div class="pb-step" id="pb4"><div class="pb-dot">4</div><div class="pb-lbl">עתיד</div></div>
+      <div class="pb-step" id="pb3"><div class="pb-dot">3</div><div class="pb-lbl">הכנסה</div></div>
+      <div class="pb-step" id="pb4"><div class="pb-dot">4</div><div class="pb-lbl">נזילות</div></div>
     </div>
 
     <!-- STEP 1 -->
@@ -560,36 +603,8 @@ tr:hover td { background: rgba(255,255,255,.02); }
 
     <!-- STEP 3 -->
     <div class="step-panel" id="step3">
-      <div class="step-title">מה יחסכם לסיכון?</div>
-      <div class="step-sub">אם הריבית תעלה 2% — כמה זה ישפיע עליכם?</div>
-      <div class="choices" id="q-risk">
-        <div class="choice" onclick="pick('risk','low',this)">
-          <div class="choice-icon">😰</div>
-          <div><div class="choice-label">מאוד מדאיג אותי</div><div class="choice-sub">מעדיף ריבית קבועה לגמרי</div></div>
-        </div>
-        <div class="choice" onclick="pick('risk','medium',this)">
-          <div class="choice-icon">😐</div>
-          <div><div class="choice-label">קצת לא נוח</div><div class="choice-sub">אוכל לספוג עלייה קטנה</div></div>
-        </div>
-        <div class="choice" onclick="pick('risk','high',this)">
-          <div class="choice-icon">😎</div>
-          <div><div class="choice-label">לא ממש מפריע לי</div><div class="choice-sub">בשביל ריבית נמוכה — שווה</div></div>
-        </div>
-        <div class="choice" onclick="pick('risk','short',this)">
-          <div class="choice-icon">⚡</div>
-          <div><div class="choice-label">אופק קצר (5-10 שנים)</div><div class="choice-sub">צפוי לפרוע / למכור מוקדם</div></div>
-        </div>
-      </div>
-      <div class="step-nav">
-        <button class="btn-back" onclick="goStep(2)">→ חזור</button>
-        <button class="btn-next" id="next3" onclick="goStep(4)" disabled>הבא ←</button>
-      </div>
-    </div>
-
-    <!-- STEP 4 -->
-    <div class="step-panel" id="step4">
-      <div class="step-title">מה הצפי שלכם?</div>
-      <div class="step-sub">שאלה אחת על הכנסה ועוד אחת על נזילות — זה מה שמשפיע על ההמלצה</div>
+      <div class="step-title">מה הצפי להכנסה שלך?</div>
+      <div class="step-sub">זה משפיע על כמה גמישות לבנות לתמהיל</div>
       <div class="choices" id="q-income">
         <div class="choice" onclick="pick('income','grow',this)">
           <div class="choice-icon">📈</div>
@@ -608,7 +623,16 @@ tr:hover td { background: rgba(255,255,255,.02); }
           <div><div class="choice-label">עשויה לרדת</div><div class="choice-sub">יציאה לפנסיה / שינוי מסלול</div></div>
         </div>
       </div>
-      <br>
+      <div class="wiz-nav">
+        <button class="btn-back" onclick="goStep(2)">→ חזור</button>
+        <button class="btn-next" id="next3" onclick="goStep(4)" disabled>הבא ←</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-panel" id="step4">
+      <div class="step-title">כמה נזילות יש לך מעבר לדירה?</div>
+      <div class="step-sub">כרית ביטחון משפיעה על היכולת לקחת סיכון בתמהיל</div>
       <div class="choices" id="q-liquidity">
         <div class="choice" onclick="pick('liquidity','low',this)">
           <div class="choice-icon">🪙</div>
@@ -623,15 +647,11 @@ tr:hover td { background: rgba(255,255,255,.02); }
           <div><div class="choice-label">נזילות גבוהה</div><div class="choice-sub">200K+ ₪ זמינים</div></div>
         </div>
       </div>
-      <div class="step-nav">
+      <div class="wiz-nav">
         <button class="btn-back" onclick="goStep(3)">→ חזור</button>
         <button class="btn-next" id="next4" onclick="startWizard()" disabled>🚀 בנה תמהיל AI</button>
       </div>
     </div>
-
-  </div>
-  <div class="disc">⚠️ לצורכי לימוד בלבד. ריביות ה-AI הן הערכות — תמיד אמתו מול הבנקים, יועץ משכנתאות, עו"ד ורו"ח.</div>
-</div>
 
 <!-- LOADING -->
 <div class="loading-screen" id="screen-loading">
@@ -766,7 +786,7 @@ const BANKS = [
 const PRIME_BASE = 5.5, INFLATION = 2.5;
 
 let liveRates = {};
-let profile   = { priority:null, risk:null, income:null, liquidity:null };
+let profile   = { priority:null, income:null, liquidity:null };
 let wizardData = null; // computed scenarios
 
 // ──────────────────────────────
@@ -826,8 +846,8 @@ function pick(key, val, el) {
 
 function checkNext() {
   if (document.getElementById('next2')) document.getElementById('next2').disabled = !profile.priority;
-  if (document.getElementById('next3')) document.getElementById('next3').disabled = !profile.risk;
-  if (document.getElementById('next4')) document.getElementById('next4').disabled = !(profile.income && profile.liquidity);
+  if (document.getElementById('next3')) document.getElementById('next3').disabled = !profile.income;
+  if (document.getElementById('next4')) document.getElementById('next4').disabled = !profile.liquidity;
 }
 
 // ──────────────────────────────
@@ -882,7 +902,7 @@ async function _runWizardInner(price, equity, loan, income, status, ltv) {
 {"poalim":{"prime":-0.45,"fixed":4.65,"madad":3.00,"variable":4.10},"leumi":{"prime":-0.50,"fixed":4.55,"madad":2.90,"variable":4.05},"mizrahi":{"prime":-0.40,"fixed":4.70,"madad":3.05,"variable":4.15},"discount":{"prime":-0.50,"fixed":4.60,"madad":2.95,"variable":4.00},"yahav":{"prime":-0.55,"fixed":4.50,"madad":2.85,"variable":3.95},"igud":{"prime":-0.50,"fixed":4.55,"madad":2.92,"variable":4.02},"otzar":{"prime":-0.60,"fixed":4.45,"madad":2.80,"variable":3.90},"mercantile":{"prime":-0.45,"fixed":4.60,"madad":2.95,"variable":4.05}}`;
     const r1 = await fetch("/api/chat", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:800,
+      body: JSON.stringify({ model:"gemini-1.5-flash", max_tokens:800,
         tools:[{type:"web_search_20250305",name:"web_search"}],
         messages:[{role:"user",content:ratesPrompt}] })
     });
@@ -898,7 +918,6 @@ async function _runWizardInner(price, equity, loan, income, status, ltv) {
   // ── 2. Build personalized mix ──
   lsBadge(2,'go','בונה...');
   const pMap = { monthly:'תשלום חודשי נמוך', total:'עלות כוללת נמוכה', stability:'יציבות ודאות', flexibility:'גמישות לפירעון מוקדם' };
-  const rMap = { low:'שנאת סיכון גבוהה', medium:'סיכון בינוני', high:'מקבל סיכון', short:'אופק קצר — פירעון מוקדם צפוי' };
   const iMap = { grow:'הכנסה צפויה לגדול', stable:'הכנסה יציבה', uncertain:'הכנסה לא ודאית', drop:'הכנסה עשויה לרדת' };
   const lMap = { low:'נזילות נמוכה', medium:'נזילות בינונית', high:'נזילות גבוהה' };
 
@@ -917,7 +936,6 @@ async function _runWizardInner(price, equity, loan, income, status, ltv) {
 
 פרופיל הלווה:
 - מה הכי חשוב: ${pMap[profile.priority]}
-- יחס לסיכון: ${rMap[profile.risk]}
 - שינוי הכנסה: ${iMap[profile.income]}
 - נזילות: ${lMap[profile.liquidity]}
 
@@ -952,7 +970,7 @@ ${rateLines}
   try {
     const r2 = await fetch("/api/chat", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:1500,
+      body: JSON.stringify({ model:"gemini-1.5-flash", max_tokens:1500,
         messages:[{role:"user",content:mixPrompt}] })
     });
     const d2 = await r2.json();
@@ -991,7 +1009,8 @@ ${rateLines}
       details.push({ ...t, eff:r, m, tot, int:tot-prin, prin });
     });
     const bank = BANKS.find(b=>b.id===sc.bankId) || BANKS[0];
-    return { ...sc, bank, br, monthly, cost, interest:cost-loan, pti:monthly/income*100, ltv:+ltv, details };
+    return { ...sc, bank, br, monthly, cost, interest:cost-loan, pti:monthly/income*100, ltv:+ltv, details,
+      avgY: sc.tracks.reduce((s,t) => s + t.years * t.pct / 100, 0) };
   }
   const computed = scenarios.map(calcSc);
   const cheapest = computed.reduce((a,b) => a.cost<b.cost ? a : b);
@@ -1003,7 +1022,7 @@ ${rateLines}
   const aiPrompt = `יועץ משכנתאות ישראלי מנוסה.
 
 פרופיל הלווה:
-- מה חשוב: ${pMap[profile.priority]}, סיכון: ${rMap[profile.risk]}
+- מה חשוב: ${pMap[profile.priority]}
 - הכנסה: ${iMap[profile.income]}, נזילות: ${lMap[profile.liquidity]}
 
 התמהיל המומלץ (${rec.label}):
@@ -1026,7 +1045,7 @@ ${rateLines}
   try {
     const r4 = await fetch("/api/chat", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:900,
+      body: JSON.stringify({ model:"gemini-1.5-flash", max_tokens:900,
         messages:[{role:"user",content:aiPrompt}] })
     });
     const d4 = await r4.json();
@@ -1120,6 +1139,43 @@ function renderResults() {
         '<div class="reasoning">' + (sc.reasoning||'') + '</div>' +
       '</div>';
 
+    const calcHTML =
+      '<div class="res-section">' +
+        '<div class="res-section-title">מחשבון דו-כיווני</div>' +
+        '<div class="bidir-card">' +
+          '<div class="bidir-modes">' +
+            '<button class="bidir-mode active" id="bm-years-' + i + '" onclick="setBiMode(' + i + ',\'years\')">גרור שנים ← ראה החזר</button>' +
+            '<button class="bidir-mode" id="bm-pay-' + i + '" onclick="setBiMode(' + i + ',\'payment\')">הזן החזר ← ראה שנים</button>' +
+          '</div>' +
+          '<div class="bidir-row">' +
+            '<span class="bidir-lbl">ריבית שנתית</span>' +
+            '<input type="range" class="bidir-slider" id="bi-rate-' + i + '" min="1" max="10" step="0.1" value="' + sc.details[0].eff.toFixed(1) + '" oninput="biCalc(' + i + ')">' +
+            '<span class="bidir-val" id="bi-rate-v-' + i + '">' + sc.details[0].eff.toFixed(2) + '%</span>' +
+          '</div>' +
+          '<div class="bidir-row" id="bi-row-years-' + i + '">' +
+            '<span class="bidir-lbl">תקופה</span>' +
+            '<input type="range" class="bidir-slider" id="bi-years-' + i + '" min="5" max="30" step="1" value="' + Math.round(sc.avgY||20) + '" oninput="biCalc(' + i + ')">' +
+            '<span class="bidir-val" id="bi-years-v-' + i + '">' + Math.round(sc.avgY||20) + ' שנים</span>' +
+          '</div>' +
+          '<div class="bidir-row" id="bi-row-pay-' + i + '" style="display:none">' +
+            '<span class="bidir-lbl">החזר חודשי</span>' +
+            '<input type="range" class="bidir-slider" id="bi-pay-' + i + '" min="1000" max="40000" step="100" value="' + Math.round(sc.monthly) + '" oninput="biCalc(' + i + ')">' +
+            '<span class="bidir-val" id="bi-pay-v-' + i + '">₪' + Math.round(sc.monthly).toLocaleString('he-IL') + '</span>' +
+          '</div>' +
+          '<div class="bidir-results">' +
+            '<div class="bidir-metric accent"><div class="bm-l" id="bi-main-l-' + i + '">החזר חודשי</div><div class="bm-v" id="bi-main-' + i + '">—</div></div>' +
+            '<div class="bidir-metric"><div class="bm-l">עלות כוללת</div><div class="bm-v" id="bi-total-' + i + '">—</div></div>' +
+            '<div class="bidir-metric"><div class="bm-l" id="bi-sec-l-' + i + '">תקופה</div><div class="bm-v" id="bi-sec-' + i + '">—</div></div>' +
+          '</div>' +
+          '<div class="bidir-pti-row">' +
+            '<span style="font-size:12px;color:var(--tm)">PTI</span>' +
+            '<div class="bidir-pti-track"><div class="bidir-pti-fill" id="bi-pti-bar-' + i + '"></div></div>' +
+            '<span class="bidir-pti-val" id="bi-pti-' + i + '">—</span>' +
+          '</div>' +
+          '<div style="font-size:11px;text-align:center;margin-top:4px;color:var(--td)" id="bi-pti-hint-' + i + '"></div>' +
+        '</div>' +
+      '</div>';
+
     const amortHTML =
       '<div class="res-section">' +
         '<div class="res-section-title">לוח סילוקין שנתי</div>' +
@@ -1201,9 +1257,12 @@ function renderResults() {
         '</div>' +
       '</div>';
 
-    panel.innerHTML = bankHTML + alertHTML + metricsHTML + tracksHTML + amortHTML + stressHTML + taxHTML + aiHTML + ctaHTML;
+    panel.innerHTML = bankHTML + alertHTML + metricsHTML + tracksHTML + calcHTML + amortHTML + stressHTML + taxHTML + aiHTML + ctaHTML;
     panelsEl.appendChild(panel);
   });
+
+  // Init bidirectional calculators
+  computed.forEach((sc, i) => { biModes[i] = 'years'; biCalc(i); });
 }
 
 function renderAI(d) {
@@ -1339,7 +1398,7 @@ async function sendAiQ() {
   try {
     const r = await fetch("/api/chat",{
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:700,
+      body: JSON.stringify({ model:"gemini-1.5-flash", max_tokens:700,
         messages:[{role:"user",content:`יועץ משכנתאות ישראלי. הלוואה ${fmt(loan)}, חודשי ${fmt(rec.monthly)}, PTI ${rec.pti.toFixed(1)}%, LTV ${ltv}%.\nשאלה: ${q}\nענה עברית, 3-5 משפטים מקצועיים.`}]
       })
     });
@@ -1441,7 +1500,7 @@ async function refreshRates() {
   try {
     const r = await fetch("/api/chat", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:800,
+      body: JSON.stringify({ model:"gemini-1.5-flash", max_tokens:800,
         tools:[{type:"web_search_20250305",name:"web_search"}],
         messages:[{role:"user",content:ratesPrompt}] })
     });
@@ -1458,6 +1517,89 @@ async function refreshRates() {
   btn.disabled = false;
   icon.className = '';
   icon.textContent = '↻';
+}
+
+// ──────────────────────────────
+// BIDIRECTIONAL CALCULATOR
+// ──────────────────────────────
+const biModes = {};
+
+function setBiMode(i, mode) {
+  biModes[i] = mode;
+  document.getElementById('bm-years-'+i).classList.toggle('active', mode==='years');
+  document.getElementById('bm-pay-'+i).classList.toggle('active', mode==='payment');
+  document.getElementById('bi-row-years-'+i).style.display = mode==='years' ? 'flex' : 'none';
+  document.getElementById('bi-row-pay-'+i).style.display   = mode==='payment' ? 'flex' : 'none';
+  document.getElementById('bi-main-l-'+i).textContent = mode==='years' ? 'החזר חודשי' : 'תקופה';
+  document.getElementById('bi-sec-l-'+i).textContent  = mode==='years' ? 'תקופה' : 'החזר חודשי';
+  biCalc(i);
+}
+
+function biCalc(i) {
+  const mode    = biModes[i] || 'years';
+  const loan    = wizardData?.loan || 1500000;
+  const income  = wizardData?.income || 18000;
+  const rate    = +document.getElementById('bi-rate-'+i).value;
+
+  document.getElementById('bi-rate-v-'+i).textContent = rate.toFixed(2) + '%';
+
+  const mr = rate / 100 / 12;
+  let monthly, years;
+
+  if (mode === 'years') {
+    years   = +document.getElementById('bi-years-'+i).value;
+    monthly = mr > 0
+      ? loan * mr * Math.pow(1+mr, years*12) / (Math.pow(1+mr, years*12)-1)
+      : loan / (years*12);
+    document.getElementById('bi-years-v-'+i).textContent = years + ' שנים';
+    document.getElementById('bi-main-'+i).textContent = fmt(monthly);
+    document.getElementById('bi-sec-'+i).textContent  = years + ' שנים';
+  } else {
+    monthly = +document.getElementById('bi-pay-'+i).value;
+    document.getElementById('bi-pay-v-'+i).textContent = '₪' + Math.round(monthly).toLocaleString('he-IL');
+    if (mr > 0 && monthly > loan * mr) {
+      years = -Math.log(1 - loan * mr / monthly) / Math.log(1+mr) / 12;
+    } else {
+      years = loan / monthly / 12;
+    }
+    if (years > 50 || !isFinite(years)) {
+      document.getElementById('bi-main-'+i).textContent = '50+ שנים';
+      document.getElementById('bi-sec-'+i).textContent  = fmt(monthly);
+      document.getElementById('bi-total-'+i).textContent = '—';
+      return;
+    }
+    document.getElementById('bi-main-'+i).textContent = (Math.round(years*10)/10) + ' שנים';
+    document.getElementById('bi-sec-'+i).textContent  = fmt(monthly);
+    years = Math.ceil(years);
+  }
+
+  const total    = monthly * years * 12;
+  const interest = Math.max(0, total - loan);
+  document.getElementById('bi-total-'+i).textContent = fmt(total);
+
+  const pti = monthly / income * 100;
+  const ptiBar  = document.getElementById('bi-pti-bar-'+i);
+  const ptiVal  = document.getElementById('bi-pti-'+i);
+  const ptiHint = document.getElementById('bi-pti-hint-'+i);
+  ptiBar.style.width = Math.min(pti, 100).toFixed(1) + '%';
+  ptiVal.textContent = pti.toFixed(1) + '%';
+
+  if (pti > 40) {
+    ptiBar.style.background = 'var(--rd)';
+    ptiVal.style.color = 'var(--rd)';
+    ptiHint.textContent = '⛔ מעל 40% — הבנק עלול לסרב';
+    ptiHint.style.color = 'var(--rd)';
+  } else if (pti > 33) {
+    ptiBar.style.background = 'var(--ac)';
+    ptiVal.style.color = 'var(--ac)';
+    ptiHint.textContent = '⚠️ מעל 33% — גבוה מהמומלץ';
+    ptiHint.style.color = 'var(--ac)';
+  } else {
+    ptiBar.style.background = 'var(--gr)';
+    ptiVal.style.color = 'var(--gr)';
+    ptiHint.textContent = '✅ PTI תקין';
+    ptiHint.style.color = 'var(--gr)';
+  }
 }
 
 // ──────────────────────────────
