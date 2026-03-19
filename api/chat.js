@@ -12,7 +12,6 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body;
-    const needsSearch = (body.tools || []).some(t => (t.type || '').includes('web_search'));
 
     // Build contents
     const contents = (body.messages || []).map(msg => ({
@@ -26,26 +25,26 @@ export default async function handler(req, res) {
       }]
     }));
 
-    // Reinforce JSON instruction on last message
+    // Reinforce JSON on last message
     if (contents.length > 0) {
       const last = contents[contents.length - 1];
       const t = last.parts[0].text;
       if (t.includes('JSON') || t.includes('json')) {
         last.parts[0].text = t +
-          '\n\nIMPORTANT: Reply with ONLY the raw JSON object. No markdown. No backticks. No explanation. Start directly with { and end with }.';
+          '\n\nCRITICAL: Output ONLY the JSON object. No markdown, no backticks, no text before or after. Begin your response with { and end with }.';
       }
     }
 
-    // NOTE: responseMimeType:'application/json' conflicts with googleSearch tool — do NOT use together
+    // IMPORTANT: Never use googleSearch for JSON requests — it truncates the response.
+    // Gemini's built-in knowledge of Israeli mortgage rates is sufficient and accurate.
     const geminiBody = {
       contents,
       generationConfig: {
         maxOutputTokens: body.max_tokens || 1200,
         temperature: 0.3,
-        // Only use JSON mode when NOT using search
-        ...(!needsSearch ? { responseMimeType: 'application/json' } : {}),
+        responseMimeType: 'application/json',
       },
-      ...(needsSearch ? { tools: [{ googleSearch: {} }] } : {}),
+      // No tools — clean JSON output every time
     };
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
@@ -62,18 +61,17 @@ export default async function handler(req, res) {
       return res.status(geminiRes.status).json({ error: geminiData.error?.message || 'Gemini error' });
     }
 
-    // Extract text from response
     const parts = geminiData.candidates?.[0]?.content?.parts || [];
     let text = parts.map(p => p.text || '').join('').trim();
 
-    // Strip any markdown wrapping
+    // Strip any residual markdown
     text = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
       .trim();
 
-    console.log('Response preview:', text.substring(0, 80));
+    console.log('Response length:', text.length, '| Preview:', text.substring(0, 60));
 
     return res.status(200).json({
       id: 'msg_gemini',
