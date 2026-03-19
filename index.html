@@ -1057,9 +1057,13 @@ ${rateLines}
   wizardData = { computed, cheapest, loan, price, income, status, ltv:+ltv, aiData };
   await new Promise(r => setTimeout(r, 400));
 
-  renderResults();
   document.getElementById('screen-loading').classList.remove('active');
   showScreen('screen-results');
+  try { renderResults(); } catch(e) {
+    console.error('renderResults error:', e);
+    document.getElementById('sc-panels').innerHTML =
+      '<div style="padding:20px;color:var(--rd);font-size:14px">שגיאה בטעינת התוצאות: ' + e.message + '<br><br>פתח את כלי המפתחים (F12) לפרטים.</div>';
+  }
   window.scrollTo({ top:0, behavior:'smooth' });
 }
 
@@ -1139,6 +1143,7 @@ function renderResults() {
         '<div class="reasoning">' + (sc.reasoning||'') + '</div>' +
       '</div>';
 
+    const firstEff = sc.details.length > 0 ? sc.details[0].eff.toFixed(1) : '4.5';
     const calcHTML =
       '<div class="res-section">' +
         '<div class="res-section-title">מחשבון דו-כיווני</div>' +
@@ -1149,8 +1154,8 @@ function renderResults() {
           '</div>' +
           '<div class="bidir-row">' +
             '<span class="bidir-lbl">ריבית שנתית</span>' +
-            '<input type="range" class="bidir-slider" id="bi-rate-' + i + '" min="1" max="10" step="0.1" value="' + sc.details[0].eff.toFixed(1) + '" oninput="biCalc(' + i + ')">' +
-            '<span class="bidir-val" id="bi-rate-v-' + i + '">' + sc.details[0].eff.toFixed(2) + '%</span>' +
+            '<input type="range" class="bidir-slider" id="bi-rate-' + i + '" min="1" max="10" step="0.1" value="' + firstEff + '" oninput="biCalc(' + i + ')">' +
+            '<span class="bidir-val" id="bi-rate-v-' + i + '">' + firstEff + '%</span>' +
           '</div>' +
           '<div class="bidir-row" id="bi-row-years-' + i + '">' +
             '<span class="bidir-lbl">תקופה</span>' +
@@ -1285,6 +1290,7 @@ function selectSc(i) {
 // BUILD AMORTIZATION
 // ──────────────────────────────
 function buildAmort(sc, loan) {
+  if (!sc.details || sc.details.length === 0) return '<tr><td colspan="6" style="padding:12px;color:var(--td);text-align:center">אין נתונים</td></tr>';
   const maxY = Math.max(...sc.details.map(t=>t.years));
   let rems = sc.details.map(t=>t.prin);
   let rows = '';
