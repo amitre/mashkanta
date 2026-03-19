@@ -887,9 +887,8 @@ async function startWizard() {
   try { await _runWizardInner(price, equity, loan, income, status, ltv); }
   catch(err) {
     console.error('Wizard error:', err);
-    document.getElementById('screen-loading').classList.remove('active');
-    alert('אירעה שגיאה: ' + err.message + '\nנסה שוב.');
     showScreen('screen-wizard');
+    alert('אירעה שגיאה: ' + err.message + '\nנסה שוב.');
   }
 }
 
@@ -1057,12 +1056,11 @@ ${rateLines}
   wizardData = { computed, cheapest, loan, price, income, status, ltv:+ltv, aiData };
   await new Promise(r => setTimeout(r, 400));
 
-  document.getElementById('screen-loading').classList.remove('active');
   showScreen('screen-results');
   try { renderResults(); } catch(e) {
     console.error('renderResults error:', e);
     document.getElementById('sc-panels').innerHTML =
-      '<div style="padding:20px;color:var(--rd);font-size:14px">שגיאה בטעינת התוצאות: ' + e.message + '<br><br>פתח את כלי המפתחים (F12) לפרטים.</div>';
+      '<div style="padding:24px;color:#dc2626;font-size:14px;direction:rtl">⚠️ שגיאה: ' + e.message + '</div>';
   }
   window.scrollTo({ top:0, behavior:'smooth' });
 }
