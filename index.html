@@ -138,11 +138,11 @@ body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(-
 .btn-next:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* ── LOADING SCREEN ── */
-.loading-screen {
-  display: none; position: fixed; inset: 0; background: #1e2a3a;
-  z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+#screen-loading {
+  background: #1e2a3a; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
 }
-.loading-screen.active { display: flex; }
+#screen-loading.active { display: flex; }
 .loading-brain { font-size: 52px; margin-bottom: 16px; animation: breathe 2s ease-in-out infinite; }
 @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 .loading-title { font-family: 'Frank Ruhl Libre', serif; font-size: 24px; font-weight: 800; margin-bottom: 6px; color: #e2e8f0; }
@@ -654,7 +654,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
     </div>
 
 <!-- LOADING -->
-<div class="loading-screen" id="screen-loading">
+<div class="screen" id="screen-loading">
   <div class="loading-brain">🤖</div>
   <div class="loading-title">בונה את המשכנתא שלך...</div>
   <div class="loading-sub">זה ייקח כ-20 שניות</div>
@@ -882,7 +882,7 @@ async function startWizard() {
   const status = document.getElementById('w-status').value;
   const ltv    = (loan / price * 100).toFixed(1);
 
-  document.getElementById('screen-loading').classList.add('active');
+  showScreen('screen-loading');
 
   try { await _runWizardInner(price, equity, loan, income, status, ltv); }
   catch(err) {
