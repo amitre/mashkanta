@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחשבון משכנתא חכם</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117; --sf: #161b22; --sf2: #1c2333; --bd: #30363d;
+  --ac: #d4a853; --ac2: #c08840; --gr: #3fb950; --rd: #f85149;
+  --bl: #58a6ff; --tx: #e6edf3; --tm: #8b949e; --td: #6e7681;
+  --pc: #58a6ff; --fc: #3fb950; --mc: #d4a853; --vc: #bc8cff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Assistant', sans-serif; background: var(--bg); color: var(--tx); min-height: 100vh; direction: rtl; }
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ══════════════════════════════
+   WIZARD SCREEN
+══════════════════════════════ */
+.wiz-hero {
+  background: linear-gradient(160deg, #0d1117 0%, #161b22 60%, #0d1117 100%);
+  padding: 40px 24px 32px; text-align: center; position: relative; overflow: hidden;
+  border-bottom: 1px solid var(--bd);
+}
+.wiz-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 60%, rgba(212,168,83,.1) 0%, transparent 55%),
+              radial-gradient(ellipse at 70% 40%, rgba(88,166,255,.07) 0%, transparent 55%);
+  pointer-events: none;
+}
+.wiz-hero h1 {
+  font-family: 'Frank Ruhl Libre', serif; font-size: clamp(26px, 5vw, 48px);
+  font-weight: 900; margin-bottom: 8px;
+  background: linear-gradient(135deg, #e6edf3 0%, #d4a853 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.wiz-hero p { color: var(--tm); font-size: 15px; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+/* Progress */
+.progress-bar {
+  display: flex; align-items: center; max-width: 480px; margin: 0 auto 28px; padding: 0 24px;
+}
+.pb-step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+.pb-step:not(:last-child)::after {
+  content: ''; position: absolute; top: 13px; left: -50%; width: 100%; height: 2px;
+  background: var(--bd); z-index: 0; transition: background .4s;
+}
+.pb-step.done:not(:last-child)::after { background: rgba(212,168,83,.5); }
+.pb-dot {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--bd);
+  background: var(--sf2); display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; z-index: 1; transition: all .3s; color: var(--td);
+}
+.pb-step.done .pb-dot  { border-color: var(--ac); color: var(--ac); background: rgba(212,168,83,.12); }
+.pb-step.active .pb-dot { border-color: var(--ac); background: var(--ac); color: #000; }
+.pb-lbl { font-size: 10px; color: var(--td); margin-top: 4px; font-weight: 600; text-align: center; }
+.pb-step.active .pb-lbl, .pb-step.done .pb-lbl { color: var(--tm); }
+
+/* Step cards */
+.wiz-body { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; }
+.step-panel { display: none; animation: fadeUp .3s ease; }
+.step-panel.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.step-title { font-family: 'Frank Ruhl Libre', serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.step-sub { color: var(--tm); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+
+/* Loan inputs */
+.loan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.ig { display: flex; flex-direction: column; gap: 5px; }
+.ig label { font-size: 11px; font-weight: 700; color: var(--tm); text-transform: uppercase; letter-spacing: .5px; }
+.ig input, .ig select {
+  background: var(--sf2); border: 1px solid var(--bd); border-radius: 9px;
+  color: var(--tx); font-family: 'Assistant', sans-serif; font-size: 16px;
+  padding: 11px 13px; transition: border-color .2s; width: 100%;
+}
+.ig input:focus, .ig select:focus { outline: none; border-color: var(--ac); }
+.ih { font-size: 11px; color: var(--td); }
+.ltv-bar-wrap { margin-top: 4px; }
+.ltv-bar { height: 4px; border-radius: 2px; background: var(--bd); margin-top: 6px; overflow: hidden; }
+.ltv-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+
+/* Choice grid */
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.choice {
+  padding: 14px 13px; border-radius: 11px; border: 1.5px solid var(--bd);
+  background: var(--sf2); cursor: pointer; transition: all .2s;
+  display: flex; align-items: flex-start; gap: 11px; text-align: right;
+}
+.choice:hover { border-color: rgba(212,168,83,.5); background: rgba(212,168,83,.04); }
+.choice.selected { border-color: var(--ac); background: rgba(212,168,83,.09); }
+.choice-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.choice-label { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.choice-sub { font-size: 12px; color: var(--td); margin-top: 3px; line-height: 1.4; }
+
+/* Nav */
+.step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+.btn-back {
+  background: transparent; border: 1px solid var(--bd); border-radius: 9px;
+  color: var(--tm); font-family: 'Assistant', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 11px 20px; cursor: pointer; transition: all .2s;
+}
+.btn-back:hover { border-color: var(--ac); color: var(--ac); }
+.btn-next {
+  background: linear-gradient(135deg, var(--ac), var(--ac2)); color: #000;
+  border: none; border-radius: 9px; font-family: 'Assistant', sans-serif;
+  font-size: 15px; font-weight: 800; padding: 12px 28px; cursor: pointer;
+  transition: all .2s; display: flex; align-items: center; gap: 8px;
+}
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(212,168,83,.35); }
+.btn-next:disabled { opacity: .35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── LOADING SCREEN ── */
+.loading-screen {
+  display: none; position: fixed; inset: 0; background: var(--bg);
+  z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+}
+.loading-screen.active { display: flex; }
+.loading-brain { font-size: 52px; margin-bottom: 16px; animation: breathe 2s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.loading-title { font-family: 'Frank Ruhl Libre', serif; font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.loading-sub { color: var(--tm); font-size: 14px; margin-bottom: 32px; }
+.loading-steps { display: flex; flex-direction: column; gap: 10px; width: 320px; }
+.ls { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: var(--sf); border: 1px solid var(--bd); border-radius: 10px; }
+.ls-icon { font-size: 19px; width: 26px; text-align: center; flex-shrink: 0; }
+.ls-text { flex: 1; font-size: 13px; font-weight: 600; }
+.ls-badge { font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 700; }
+.ls-badge.wait { background: rgba(139,148,158,.12); color: var(--td); }
+.ls-badge.go { background: rgba(212,168,83,.15); color: var(--ac); animation: pulse 1.2s infinite; }
+.ls-badge.ok { background: rgba(63,185,80,.15); color: var(--gr); }
+@keyframes pulse { 0%,100%{opacity:.4;} 50%{opacity:1;} }
+
+/* ══════════════════════════════
+   RESULTS SCREEN
+══════════════════════════════ */
+.res-header {
+  background: var(--sf); border-bottom: 1px solid var(--bd);
+  padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 50;
+}
+.res-back-btn {
+  background: transparent; border: 1px solid var(--bd); border-radius: 8px;
+  color: var(--tm); font-family: 'Assistant', sans-serif; font-size: 13px;
+  font-weight: 600; padding: 7px 14px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+}
+.res-back-btn:hover { border-color: var(--ac); color: var(--ac); }
+.res-header-title { font-family: 'Frank Ruhl Libre', serif; font-size: 17px; font-weight: 700; flex: 1; }
+
+.res-body { max-width: 860px; margin: 0 auto; padding: 22px 16px 48px; }
+
+/* Scenario pills */
+.sc-pills { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.sc-pill {
+  padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--bd);
+  background: var(--sf2); color: var(--tm); font-family: 'Assistant', sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.sc-pill:hover { border-color: var(--ac); }
+.sc-pill.active { border-color: var(--ac); background: rgba(212,168,83,.1); color: var(--ac); }
+.sc-pill.winner { border-color: rgba(63,185,80,.4); color: var(--gr); }
+.sc-pill.winner.active { background: rgba(63,185,80,.08); }
+
+/* Scenario panel */
+.sc-panel { display: none; animation: fadeUp .3s ease; }
+.sc-panel.active { display: block; }
+
+/* Bank badge */
+.bank-badge {
+  display: flex; align-items: center; gap: 10px; background: var(--sf);
+  border: 1px solid var(--bd); border-radius: 12px; padding: 13px 16px; margin-bottom: 16px;
+}
+.bank-badge.winner-bank { border-color: rgba(63,185,80,.4); background: rgba(63,185,80,.04); }
+.bb-logo { font-size: 28px; }
+.bb-info { flex: 1; }
+.bb-name { font-weight: 800; font-size: 16px; }
+.bb-sub { font-size: 12px; color: var(--tm); margin-top: 2px; }
+.bb-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: rgba(63,185,80,.15); color: var(--gr); border: 1px solid rgba(63,185,80,.3); }
+
+/* Key metrics */
+.metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.metric { background: var(--sf2); border: 1px solid var(--bd); border-radius: 10px; padding: 13px; text-align: center; }
+.metric .ml { font-size: 10px; color: var(--tm); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+.metric .mv { font-size: 20px; font-weight: 800; font-family: 'Frank Ruhl Libre', serif; }
+.metric.hl { border-color: var(--ac); } .metric.hl .mv { color: var(--ac); }
+.metric.gr .mv { color: var(--gr); } .metric.rd .mv { color: var(--rd); }
+
+/* Tracks */
+.tracks-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+.track-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--sf2); border: 1px solid var(--bd); border-radius: 9px; padding: 11px 14px;
+}
+.tr-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.tr-name { font-weight: 700; font-size: 13px; flex: 1; }
+.tr-meta { font-size: 12px; color: var(--tm); }
+.tr-rate { font-size: 13px; font-weight: 700; color: var(--ac); margin: 0 10px; }
+.tr-pay { font-size: 14px; font-weight: 800; font-family: 'Frank Ruhl Libre', serif; }
+
+/* Reasoning */
+.reasoning {
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px; padding: 14px 16px; font-size: 13px; line-height: 1.8;
+  color: var(--tm); margin-bottom: 16px;
+}
+.reasoning strong { color: var(--tx); }
+
+/* Sections */
+.res-section { margin-bottom: 22px; }
+.res-section-title {
+  font-family: 'Frank Ruhl Libre', serif; font-size: 16px; font-weight: 700;
+  margin-bottom: 11px; display: flex; align-items: center; gap: 8px; color: var(--tx);
+}
+.res-section-title::before { content: ''; display: block; width: 3px; height: 16px; background: var(--ac); border-radius: 2px; }
+
+/* Amort table */
+.tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--bd); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: var(--sf2); color: var(--tm); font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .3px; padding: 9px 11px; text-align: right; }
+td { padding: 8px 11px; border-top: 1px solid var(--bd); }
+tr:hover td { background: rgba(255,255,255,.02); }
+.bar-mini { height: 3px; border-radius: 2px; background: var(--ac); }
+
+/* Stress */
+.stress-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 8px; }
+.stress-card { background: var(--sf2); border: 1px solid var(--bd); border-radius: 9px; padding: 12px; }
+.sc-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.sc-val { font-size: 18px; font-weight: 800; font-family: 'Frank Ruhl Libre', serif; }
+.sc-diff { font-size: 11px; color: var(--td); margin-top: 2px; }
+.stress-card.w { border-color: rgba(212,168,83,.35); } .stress-card.w .sc-val { color: var(--ac); }
+.stress-card.d { border-color: rgba(248,81,73,.35); } .stress-card.d .sc-val { color: var(--rd); }
+
+/* Tax */
+.tax-list { display: flex; flex-direction: column; gap: 5px; }
+.tax-row { display: flex; justify-content: space-between; padding: 8px 12px; background: var(--sf2); border-radius: 7px; font-size: 13px; }
+.tax-row.tot { border: 1px solid rgba(212,168,83,.4); font-weight: 700; }
+.tax-row.grand { border: 1px solid rgba(248,81,73,.3); font-weight: 700; }
+.tax-row .tv { font-weight: 700; color: var(--ac); }
+.tax-row.grand .tv { color: var(--rd); }
+
+/* AI box */
+.ai-box { background: linear-gradient(135deg, rgba(212,168,83,.05), rgba(88,166,255,.04)); border: 1px solid rgba(212,168,83,.22); border-radius: 12px; padding: 18px; }
+.ai-box-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.ai-icon-sm { width: 34px; height: 34px; background: linear-gradient(135deg, var(--ac), #c08840); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+#ai-content { font-size: 13px; line-height: 1.8; color: var(--tm); }
+.ai-point { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.ai-point:last-child { border-bottom: none; }
+.ai-point .dot { color: var(--ac); flex-shrink: 0; font-size: 14px; }
+.ai-section-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; margin: 12px 0 6px; }
+.ai-section-lbl.r { color: var(--rd); }
+.ai-section-lbl.g { color: var(--gr); }
+.ai-section-lbl.a { color: var(--ac); }
+.ai-section-lbl.b { color: var(--bl); }
+.highlight-box { background: rgba(212,168,83,.07); border: 1px solid rgba(212,168,83,.2); border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; color: var(--tx); }
+.question-box { background: rgba(88,166,255,.05); border: 1px solid rgba(88,166,255,.2); border-radius: 8px; padding: 12px; margin: 8px 0; font-size: 13px; line-height: 1.7; font-style: italic; color: var(--tm); }
+
+/* Q input */
+.q-input-wrap { display: flex; gap: 8px; margin-top: 14px; }
+.q-input-wrap input { flex: 1; background: var(--sf2); border: 1px solid var(--bd); border-radius: 9px; color: var(--tx); font-family: 'Assistant', sans-serif; font-size: 14px; padding: 10px 13px; transition: border-color .2s; }
+.q-input-wrap input:focus { outline: none; border-color: var(--ac); }
+.q-send { background: var(--sf2); border: 1px solid var(--bd); border-radius: 9px; color: var(--tm); font-family: 'Assistant', sans-serif; font-size: 13px; font-weight: 700; padding: 10px 16px; cursor: pointer; transition: all .2s; }
+.q-send:hover { border-color: var(--ac); color: var(--ac); }
+
+/* Alerts */
+.al { padding: 10px 13px; border-radius: 7px; font-size: 12px; display: flex; gap: 7px; align-items: flex-start; line-height: 1.5; }
+.al.s { background: rgba(63,185,80,.08); border: 1px solid rgba(63,185,80,.2); color: var(--gr); }
+.al.w { background: rgba(212,168,83,.08); border: 1px solid rgba(212,168,83,.2); color: var(--ac); }
+.al.d { background: rgba(248,81,73,.07); border: 1px solid rgba(248,81,73,.2); color: var(--rd); }
+
+.skeleton { background: linear-gradient(90deg, var(--sf2) 25%, var(--bd) 50%, var(--sf2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 12px; margin: 4px 0; }
+@keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+
+.disc { padding: 14px 16px; background: var(--sf); border-top: 1px solid var(--bd); font-size: 11px; color: var(--td); line-height: 1.6; text-align: center; }
+
+/* ── DATA STATUS BAR ── */
+.data-status-bar {
+  background: var(--sf); border: 1px solid var(--bd); border-radius: 10px;
+  padding: 12px 16px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.dsb-indicator {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: var(--td);
+}
+.dsb-indicator.live   { background: var(--gr); box-shadow: 0 0 0 3px rgba(63,185,80,.2); animation: blink 2s ease-in-out infinite; }
+.dsb-indicator.static { background: var(--ac); }
+.dsb-indicator.error  { background: var(--rd); }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+.dsb-main { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dsb-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+}
+.dsb-badge.gemini { background: rgba(88,166,255,.12); border: 1px solid rgba(88,166,255,.25); color: var(--bl); }
+.dsb-badge.web    { background: rgba(63,185,80,.12);  border: 1px solid rgba(63,185,80,.25);  color: var(--gr); }
+.dsb-badge.static { background: rgba(212,168,83,.12); border: 1px solid rgba(212,168,83,.25); color: var(--ac); }
+.dsb-badge.error  { background: rgba(248,81,73,.10);  border: 1px solid rgba(248,81,73,.25);  color: var(--rd); }
+.dsb-text { font-size: 12px; color: var(--tm); }
+.dsb-time { font-size: 11px; color: var(--td); margin-right: auto; }
+.dsb-refresh {
+  background: transparent; border: 1px solid var(--bd); border-radius: 7px;
+  color: var(--tm); font-family: 'Assistant', sans-serif;
+  font-size: 11px; font-weight: 600; padding: 4px 11px; cursor: pointer;
+  transition: all .2s; display: flex; align-items: center; gap: 5px;
+}
+.dsb-refresh:hover { border-color: var(--bl); color: var(--bl); }
+.dsb-refresh:disabled { opacity: .4; cursor: not-allowed; }
+.dsb-refresh .spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── AI SOURCE BANNER ── */
+.source-banner {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: linear-gradient(135deg, rgba(26,188,156,.07), rgba(88,166,255,.06));
+  border: 1px solid rgba(26,188,156,.25);
+  border-radius: 10px; padding: 11px 15px; margin-bottom: 16px;
+  font-size: 13px;
+}
+.source-banner .sb-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #1abc9c; flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(26,188,156,.8);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%,100% { box-shadow: 0 0 4px rgba(26,188,156,.6); }
+  50%      { box-shadow: 0 0 10px rgba(26,188,156,1); }
+}
+.source-banner .sb-main { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.source-banner .sb-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(26,188,156,.12); border: 1px solid rgba(26,188,156,.3);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 12px; font-weight: 700; color: #1abc9c;
+}
+.source-banner .sb-chip.web {
+  background: rgba(88,166,255,.1); border-color: rgba(88,166,255,.3); color: var(--bl);
+}
+.source-banner .sb-chip.time {
+  background: rgba(212,168,83,.1); border-color: rgba(212,168,83,.3); color: var(--ac);
+}
+.source-banner .sb-chip.warn {
+  background: rgba(248,81,73,.08); border-color: rgba(248,81,73,.25); color: var(--rd);
+}
+.source-banner .sb-text { font-size: 12px; color: var(--tm); }
+.source-banner .sb-disclaimer {
+  font-size: 11px; color: var(--td);
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-top: 8px; margin-top: 4px; width: 100%; line-height: 1.5;
+}
+
+/* ── ADVISOR CTA ── */
+.advisor-cta {
+  background: linear-gradient(135deg, #1a1400 0%, #161b22 50%, #001a0d 100%);
+  border: 1.5px solid rgba(212,168,83,.35);
+  border-radius: 16px; padding: 28px 24px; margin: 28px 0 8px;
+  position: relative; overflow: hidden;
+}
+.advisor-cta::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(212,168,83,.08) 0%, transparent 55%),
+              radial-gradient(ellipse at 80% 50%, rgba(63,185,80,.06) 0%, transparent 55%);
+  pointer-events: none;
+}
+.advisor-cta-inner { position: relative; z-index: 1; }
+.advisor-cta-top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.advisor-avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(212,168,83,.2), rgba(63,185,80,.15));
+  border: 2px solid rgba(212,168,83,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+}
+.advisor-cta-title { font-family: 'Frank Ruhl Libre', serif; font-size: 20px; font-weight: 900; margin-bottom: 5px; }
+.advisor-cta-sub { font-size: 13px; color: var(--tm); line-height: 1.6; max-width: 440px; }
+.price-tag {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(212,168,83,.08); border: 1px solid rgba(212,168,83,.25);
+  border-radius: 10px; padding: 10px 16px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.price-orig { font-size: 13px; color: var(--td); text-decoration: line-through; }
+.price-new { font-family: 'Frank Ruhl Libre', serif; font-size: 26px; font-weight: 900; color: var(--ac); }
+.price-label { font-size: 12px; color: var(--tm); }
+.price-badge {
+  background: rgba(63,185,80,.15); border: 1px solid rgba(63,185,80,.3);
+  color: var(--gr); font-size: 11px; font-weight: 800; padding: 3px 10px;
+  border-radius: 20px; margin-right: auto;
+}
+.advisor-perks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.perk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tm); }
+.perk-icon { font-size: 16px; flex-shrink: 0; }
+.advisor-cta-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.cta-btn-primary {
+  flex: 1; min-width: 180px;
+  background: linear-gradient(135deg, var(--ac), var(--ac2));
+  color: #000; border: none; border-radius: 10px;
+  font-family: 'Assistant', sans-serif; font-size: 15px; font-weight: 800;
+  padding: 14px 20px; cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.cta-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(212,168,83,.4); }
+.cta-btn-secondary {
+  background: transparent; border: 1px solid var(--bd);
+  border-radius: 10px; color: var(--tm);
+  font-family: 'Assistant', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 14px 18px; cursor: pointer; transition: all .2s;
+}
+.cta-btn-secondary:hover { border-color: var(--ac); color: var(--ac); }
+.advisor-guarantee {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--td); margin-top: 14px; justify-content: center;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.75); z-index: 200;
+  align-items: center; justify-content: center; padding: 16px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--sf); border: 1px solid var(--bd); border-radius: 16px;
+  padding: 28px; max-width: 460px; width: 100%; position: relative;
+  animation: fadeUp .25s ease;
+}
+.modal-close {
+  position: absolute; top: 14px; left: 14px;
+  background: var(--sf2); border: 1px solid var(--bd); border-radius: 6px;
+  color: var(--tm); font-size: 13px; padding: 4px 10px; cursor: pointer;
+  transition: all .2s;
+}
+.modal-close:hover { border-color: var(--rd); color: var(--rd); }
+.modal-title { font-family: 'Frank Ruhl Libre', serif; font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: var(--tm); margin-bottom: 20px; line-height: 1.6; }
+.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.form-group label { font-size: 11px; font-weight: 700; color: var(--tm); text-transform: uppercase; letter-spacing: .5px; }
+.form-group input, .form-group select {
+  background: var(--sf2); border: 1px solid var(--bd); border-radius: 8px;
+  color: var(--tx); font-family: 'Assistant', sans-serif; font-size: 15px;
+  padding: 10px 13px; transition: border-color .2s;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--ac); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-submit {
+  width: 100%; background: linear-gradient(135deg, var(--ac), var(--ac2));
+  color: #000; border: none; border-radius: 9px;
+  font-family: 'Assistant', sans-serif; font-size: 15px; font-weight: 800;
+  padding: 13px; cursor: pointer; transition: all .2s; margin-top: 4px;
+}
+.modal-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(212,168,83,.35); }
+.modal-submit:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.modal-note { font-size: 11px; color: var(--td); text-align: center; margin-top: 10px; line-height: 1.6; }
+.success-state { text-align: center; padding: 12px 0; }
+.success-icon { font-size: 48px; margin-bottom: 12px; }
+.success-title { font-family: 'Frank Ruhl Libre', serif; font-size: 22px; font-weight: 900; margin-bottom: 8px; color: var(--gr); }
+.success-sub { font-size: 14px; color: var(--tm); line-height: 1.7; }
+
+@media(max-width:520px) {
+  .advisor-perks { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
+@media(max-width:520px) {
+  .loan-grid { grid-template-columns: 1fr; }
+  .choices { grid-template-columns: 1fr; }
+  .metrics-row { grid-template-columns: repeat(2,1fr); }
+  .stress-grid { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SCREEN 1: WIZARD
+══════════════════════════════ -->
+<div class="screen active" id="screen-wizard">
+  <div class="wiz-hero">
+    <h1>מחשבון משכנתא חכם</h1>
+    <p>4 שאלות קצרות → AI בונה תמהיל מותאם אישית ובוחר את הבנק הזול ביותר</p>
+  </div>
+
+  <div class="wiz-body">
+    <!-- Progress -->
+    <div class="progress-bar" id="progress-bar">
+      <div class="pb-step active" id="pb1"><div class="pb-dot">1</div><div class="pb-lbl">הלוואה</div></div>
+      <div class="pb-step" id="pb2"><div class="pb-dot">2</div><div class="pb-lbl">מטרות</div></div>
+      <div class="pb-step" id="pb3"><div class="pb-dot">3</div><div class="pb-lbl">סיכון</div></div>
+      <div class="pb-step" id="pb4"><div class="pb-dot">4</div><div class="pb-lbl">עתיד</div></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step-panel active" id="step1">
+      <div class="step-title">פרטי הנכס וההלוואה</div>
+      <div class="step-sub">הזינו את הנתונים הבסיסיים — אפשר לשנות אחר כך</div>
+      <div class="loan-grid">
+        <div class="ig">
+          <label>מחיר הנכס (₪)</label>
+          <input type="number" id="w-price" value="2000000" step="50000" oninput="wSync()">
+        </div>
+        <div class="ig">
+          <label>הון עצמי (₪)</label>
+          <input type="number" id="w-equity" value="500000" step="10000" oninput="wSync()">
+          <span class="ih" id="w-ltv-lbl" style="color:var(--ac)">LTV: 75% · הלוואה: ₪1,500,000</span>
+          <div class="ltv-bar-wrap">
+            <div class="ltv-bar"><div class="ltv-fill" id="ltv-fill" style="width:75%;background:var(--ac)"></div></div>
+          </div>
+        </div>
+        <div class="ig">
+          <label>הכנסה נטו (₪/חודש)</label>
+          <input type="number" id="w-income" value="18000" step="500">
+        </div>
+        <div class="ig">
+          <label>סטטוס דירה</label>
+          <select id="w-status">
+            <option value="first">דירה ראשונה</option>
+            <option value="second">דירה שנייה+</option>
+            <option value="investor">משקיע</option>
+            <option value="oleh">עולה חדש</option>
+          </select>
+        </div>
+      </div>
+      <div class="step-nav">
+        <div></div>
+        <button class="btn-next" onclick="goStep(2)">הבא ←</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-panel" id="step2">
+      <div class="step-title">מה הכי חשוב לך?</div>
+      <div class="step-sub">ה-AI יבנה תמהיל שמתאים בדיוק למה שאתם מחפשים</div>
+      <div class="choices" id="q-priority">
+        <div class="choice" onclick="pick('priority','monthly',this)">
+          <div class="choice-icon">💸</div>
+          <div><div class="choice-label">תשלום חודשי נמוך</div><div class="choice-sub">לחץ פיננסי מינימלי עכשיו</div></div>
+        </div>
+        <div class="choice" onclick="pick('priority','total',this)">
+          <div class="choice-icon">📉</div>
+          <div><div class="choice-label">עלות כוללת נמוכה</div><div class="choice-sub">פחות ריבית לאורך זמן</div></div>
+        </div>
+        <div class="choice" onclick="pick('priority','stability',this)">
+          <div class="choice-icon">🔒</div>
+          <div><div class="choice-label">יציבות ודאות</div><div class="choice-sub">לא אוהב הפתעות בהחזר</div></div>
+        </div>
+        <div class="choice" onclick="pick('priority','flexibility',this)">
+          <div class="choice-icon">🔓</div>
+          <div><div class="choice-label">גמישות לפירעון מוקדם</div><div class="choice-sub">עשוי להחזיר מוקדם</div></div>
+        </div>
+      </div>
+      <div class="step-nav">
+        <button class="btn-back" onclick="goStep(1)">→ חזור</button>
+        <button class="btn-next" id="next2" onclick="goStep(3)" disabled>הבא ←</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-panel" id="step3">
+      <div class="step-title">מה יחסכם לסיכון?</div>
+      <div class="step-sub">אם הריבית תעלה 2% — כמה זה ישפיע עליכם?</div>
+      <div class="choices" id="q-risk">
+        <div class="choice" onclick="pick('risk','low',this)">
+          <div class="choice-icon">😰</div>
+          <div><div class="choice-label">מאוד מדאיג אותי</div><div class="choice-sub">מעדיף ריבית קבועה לגמרי</div></div>
+        </div>
+        <div class="choice" onclick="pick('risk','medium',this)">
+          <div class="choice-icon">😐</div>
+          <div><div class="choice-label">קצת לא נוח</div><div class="choice-sub">אוכל לספוג עלייה קטנה</div></div>
+        </div>
+        <div class="choice" onclick="pick('risk','high',this)">
+          <div class="choice-icon">😎</div>
+          <div><div class="choice-label">לא ממש מפריע לי</div><div class="choice-sub">בשביל ריבית נמוכה — שווה</div></div>
+        </div>
+        <div class="choice" onclick="pick('risk','short',this)">
+          <div class="choice-icon">⚡</div>
+          <div><div class="choice-label">אופק קצר (5-10 שנים)</div><div class="choice-sub">צפוי לפרוע / למכור מוקדם</div></div>
+        </div>
+      </div>
+      <div class="step-nav">
+        <button class="btn-back" onclick="goStep(2)">→ חזור</button>
+        <button class="btn-next" id="next3" onclick="goStep(4)" disabled>הבא ←</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step-panel" id="step4">
+      <div class="step-title">מה הצפי שלכם?</div>
+      <div class="step-sub">שאלה אחת על הכנסה ועוד אחת על נזילות — זה מה שמשפיע על ההמלצה</div>
+      <div class="choices" id="q-income">
+        <div class="choice" onclick="pick('income','grow',this)">
+          <div class="choice-icon">📈</div>
+          <div><div class="choice-label">הכנסה צפויה לגדול</div><div class="choice-sub">קידום / עסק בצמיחה</div></div>
+        </div>
+        <div class="choice" onclick="pick('income','stable',this)">
+          <div class="choice-icon">➡️</div>
+          <div><div class="choice-label">הכנסה יציבה</div><div class="choice-sub">משכורת קבועה</div></div>
+        </div>
+        <div class="choice" onclick="pick('income','uncertain',this)">
+          <div class="choice-icon">❓</div>
+          <div><div class="choice-label">לא בטוח</div><div class="choice-sub">עצמאי / תנודתי</div></div>
+        </div>
+        <div class="choice" onclick="pick('income','drop',this)">
+          <div class="choice-icon">📉</div>
+          <div><div class="choice-label">עשויה לרדת</div><div class="choice-sub">יציאה לפנסיה / שינוי מסלול</div></div>
+        </div>
+      </div>
+      <br>
+      <div class="choices" id="q-liquidity">
+        <div class="choice" onclick="pick('liquidity','low',this)">
+          <div class="choice-icon">🪙</div>
+          <div><div class="choice-label">נזילות נמוכה</div><div class="choice-sub">רוב החסכון הולך לדירה</div></div>
+        </div>
+        <div class="choice" onclick="pick('liquidity','medium',this)">
+          <div class="choice-icon">💰</div>
+          <div><div class="choice-label">כרית ביטחון בינונית</div><div class="choice-sub">50K–200K ₪ נזיל</div></div>
+        </div>
+        <div class="choice" onclick="pick('liquidity','high',this)">
+          <div class="choice-icon">🏦</div>
+          <div><div class="choice-label">נזילות גבוהה</div><div class="choice-sub">200K+ ₪ זמינים</div></div>
+        </div>
+      </div>
+      <div class="step-nav">
+        <button class="btn-back" onclick="goStep(3)">→ חזור</button>
+        <button class="btn-next" id="next4" onclick="startWizard()" disabled>🚀 בנה תמהיל AI</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="disc">⚠️ לצורכי לימוד בלבד. ריביות ה-AI הן הערכות — תמיד אמתו מול הבנקים, יועץ משכנתאות, עו"ד ורו"ח.</div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen" id="screen-loading">
+  <div class="loading-brain">🤖</div>
+  <div class="loading-title">בונה את המשכנתא שלך...</div>
+  <div class="loading-sub">זה ייקח כ-20 שניות</div>
+  <div class="loading-steps">
+    <div class="ls" id="ls1">
+      <div class="ls-icon">📡</div>
+      <div class="ls-text">עדכון ריביות חיות מהבנקים</div>
+      <div class="ls-badge wait" id="ls1b">ממתין</div>
+    </div>
+    <div class="ls" id="ls2">
+      <div class="ls-icon">🧮</div>
+      <div class="ls-text">בניית תמהיל לפי הפרופיל שלך</div>
+      <div class="ls-badge wait" id="ls2b">ממתין</div>
+    </div>
+    <div class="ls" id="ls3">
+      <div class="ls-icon">🏦</div>
+      <div class="ls-text">בחירת הבנק הזול ביותר</div>
+      <div class="ls-badge wait" id="ls3b">ממתין</div>
+    </div>
+    <div class="ls" id="ls4">
+      <div class="ls-icon">💬</div>
+      <div class="ls-text">ניתוח והמלצות אישיות</div>
+      <div class="ls-badge wait" id="ls4b">ממתין</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN 2: RESULTS
+══════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <div class="res-header">
+    <button class="res-back-btn" onclick="backToWizard()">← ערוך פרטים</button>
+    <div class="res-header-title" id="res-header-title">התמהיל המומלץ שלך</div>
+  </div>
+
+  <div class="res-body">
+
+    <!-- Data Status Bar -->
+    <div class="data-status-bar" id="data-status-bar">
+      <div class="dsb-indicator" id="dsb-dot"></div>
+      <div class="dsb-main">
+        <span class="dsb-badge gemini" id="dsb-gemini-badge">⚡ Google Gemini AI</span>
+        <span class="dsb-badge" id="dsb-source-badge">🔄 טוען...</span>
+        <span class="dsb-text" id="dsb-text">בודק ריביות...</span>
+      </div>
+      <span class="dsb-time" id="dsb-time"></span>
+      <button class="dsb-refresh" id="dsb-refresh-btn" onclick="refreshRates()" title="עדכן ריביות מחדש">
+        <span id="dsb-refresh-icon">↻</span> עדכן ריביות
+      </button>
+    </div>
+
+    <!-- Scenario pills -->
+    <div class="sc-pills" id="sc-pills"></div>
+
+    <!-- Scenario panels (populated by JS) -->
+    <div id="sc-panels"></div>
+
+  </div>
+  <div class="disc">⚠️ לצורכי לימוד בלבד. הריביות הן הערכות — אמתו מול הבנקים, יועץ משכנתאות, עו"ד ורו"ח.</div>
+</div>
+
+<!-- ══ ADVISOR MODAL ══ -->
+<div class="modal-overlay" id="advisor-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕ סגור</button>
+    <div id="modal-form-state">
+      <div class="modal-title">דברו עם יועץ משכנתאות</div>
+      <div class="modal-sub">השאירו פרטים ויועץ מוסמך ייצור איתכם קשר תוך 24 שעות לתיאום פגישה</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>שם פרטי</label>
+          <input type="text" id="f-name" placeholder="ישראל">
+        </div>
+        <div class="form-group">
+          <label>שם משפחה</label>
+          <input type="text" id="f-last" placeholder="ישראלי">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>טלפון</label>
+        <input type="tel" id="f-phone" placeholder="050-0000000">
+      </div>
+      <div class="form-group">
+        <label>מייל</label>
+        <input type="email" id="f-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>מתי נוח לדבר?</label>
+        <select id="f-time">
+          <option value="">בחר שעה מועדפת</option>
+          <option>בוקר (9:00–12:00)</option>
+          <option>צהריים (12:00–16:00)</option>
+          <option>אחה"צ (16:00–19:00)</option>
+          <option>ערב (19:00–21:00)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>הערה (אופציונלי)</label>
+        <input type="text" id="f-note" placeholder="לדוג׳: מעדיף ייעוץ בזום">
+      </div>
+      <button class="modal-submit" id="modal-submit-btn" onclick="submitForm()">📞 שלח ואצור קשר</button>
+      <div class="modal-note">🔒 הפרטים שלך מאובטחים ולא יועברו לצד שלישי · מחיר מיוחד זמין רק למשתמשי המערכת</div>
+    </div>
+    <div id="modal-success-state" class="success-state" style="display:none">
+      <div class="success-icon">✅</div>
+      <div class="success-title">הבקשה נשלחה!</div>
+      <div class="success-sub">יועץ מוסמך ייצור איתך קשר תוך 24 שעות.<br>בינתיים, ניתוח המשכנתא שלך מחכה לך במסך התוצאות.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────
+// DATA
+// ──────────────────────────────
+const TC  = { prime:'#58a6ff', fixed:'#3fb950', madad:'#d4a853', variable:'#bc8cff' };
+const TN  = { prime:'פריים', fixed:'קל"צ', madad:'קצ"מ', variable:'משתנה כ5"ש' };
+const BANKS = [
+  { id:'poalim',     name:'בנק הפועלים', logo:'🏛️', rates:{prime:-0.45,fixed:4.65,madad:3.00,variable:4.10} },
+  { id:'leumi',      name:'בנק לאומי',    logo:'🦁', rates:{prime:-0.50,fixed:4.55,madad:2.90,variable:4.05} },
+  { id:'mizrahi',    name:'מזרחי-טפחות', logo:'🏦', rates:{prime:-0.40,fixed:4.70,madad:3.05,variable:4.15} },
+  { id:'discount',   name:'דיסקונט',      logo:'💼', rates:{prime:-0.50,fixed:4.60,madad:2.95,variable:4.00} },
+  { id:'yahav',      name:'בנק יהב',      logo:'🌿', rates:{prime:-0.55,fixed:4.50,madad:2.85,variable:3.95} },
+  { id:'igud',       name:'בנק אגוד',     logo:'🤝', rates:{prime:-0.50,fixed:4.55,madad:2.92,variable:4.02} },
+  { id:'otzar',      name:'אוצר החייל',   logo:'🎖️', rates:{prime:-0.60,fixed:4.45,madad:2.80,variable:3.90} },
+  { id:'mercantile', name:'מרקנטיל',      logo:'💹', rates:{prime:-0.45,fixed:4.60,madad:2.95,variable:4.05} },
+];
+const PRIME_BASE = 5.5, INFLATION = 2.5;
+
+let liveRates = {};
+let profile   = { priority:null, risk:null, income:null, liquidity:null };
+let wizardData = null; // computed scenarios
+
+// ──────────────────────────────
+// WIZARD NAV
+// ──────────────────────────────
+let curStep = 1;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goStep(n) {
+  document.getElementById('step'+curStep).classList.remove('active');
+  document.getElementById('step'+n).classList.add('active');
+  for (let i=1; i<=4; i++) {
+    const el = document.getElementById('pb'+i);
+    el.classList.remove('active','done');
+    if (i < n)      el.classList.add('done');
+    else if (i===n) el.classList.add('active');
+  }
+  curStep = n;
+  window.scrollTo({ top: 0, behavior:'smooth' });
+}
+
+function backToWizard() {
+  showScreen('screen-wizard');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ──────────────────────────────
+// LOAN SYNC
+// ──────────────────────────────
+function wSync() {
+  const price  = +document.getElementById('w-price').value;
+  const equity = +document.getElementById('w-equity').value;
+  const loan   = Math.max(0, price - equity);
+  const ltv    = price > 0 ? (loan / price * 100) : 0;
+  const lbl    = document.getElementById('w-ltv-lbl');
+  lbl.textContent = `LTV: ${ltv.toFixed(0)}% · הלוואה: ${fmt(loan)}`;
+  lbl.style.color = ltv > 75 ? 'var(--rd)' : ltv > 60 ? 'var(--ac)' : 'var(--gr)';
+  const fill = document.getElementById('ltv-fill');
+  fill.style.width = Math.min(ltv, 100) + '%';
+  fill.style.background = ltv > 75 ? 'var(--rd)' : ltv > 60 ? 'var(--ac)' : 'var(--gr)';
+}
+
+// ──────────────────────────────
+// CHOICES
+// ──────────────────────────────
+function pick(key, val, el) {
+  profile[key] = val;
+  const group = el.closest('.choices');
+  group.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  checkNext();
+}
+
+function checkNext() {
+  if (document.getElementById('next2')) document.getElementById('next2').disabled = !profile.priority;
+  if (document.getElementById('next3')) document.getElementById('next3').disabled = !profile.risk;
+  if (document.getElementById('next4')) document.getElementById('next4').disabled = !(profile.income && profile.liquidity);
+}
+
+// ──────────────────────────────
+// HELPERS
+// ──────────────────────────────
+function mp(P, r, y) {
+  if (r <= 0) return P / (y*12);
+  const m = r/100/12, n = y*12;
+  return P * m * Math.pow(1+m,n) / (Math.pow(1+m,n)-1);
+}
+function fmt(n) {
+  n = Math.max(0, n);
+  if (n >= 1e6) return '₪' + (n/1e6).toFixed(2) + 'M';
+  return '₪' + Math.round(n).toLocaleString('he-IL');
+}
+function getBR(id) { return liveRates[id] || BANKS.find(b=>b.id===id)?.rates || BANKS[0].rates; }
+
+function lsBadge(n, state, txt) {
+  const el = document.getElementById('ls'+n+'b');
+  el.textContent = txt;
+  el.className = 'ls-badge ' + state;
+}
+
+// ──────────────────────────────
+// MAIN WIZARD RUN
+// ──────────────────────────────
+async function startWizard() {
+  const price  = +document.getElementById('w-price').value;
+  const equity = +document.getElementById('w-equity').value;
+  const loan   = price - equity;
+  const income = +document.getElementById('w-income').value;
+  const status = document.getElementById('w-status').value;
+  const ltv    = (loan / price * 100).toFixed(1);
+
+  document.getElementById('screen-loading').classList.add('active');
+
+  try { await _runWizardInner(price, equity, loan, income, status, ltv); }
+  catch(err) {
+    console.error('Wizard error:', err);
+    document.getElementById('screen-loading').classList.remove('active');
+    alert('אירעה שגיאה: ' + err.message + '\nנסה שוב.');
+    showScreen('screen-wizard');
+  }
+}
+
+async function _runWizardInner(price, equity, loan, income, status, ltv) {
+  // ── 1. Fetch live rates ──
+  lsBadge(1,'go','מחפש...');
+  try {
+    const ratesPrompt = `יועץ משכנתאות ישראלי. ${new Date().toLocaleDateString('he-IL')}.
+חפש ריביות עדכניות למשכנתאות ישראל וענה JSON בלבד ללא כלום נוסף:
+{"poalim":{"prime":-0.45,"fixed":4.65,"madad":3.00,"variable":4.10},"leumi":{"prime":-0.50,"fixed":4.55,"madad":2.90,"variable":4.05},"mizrahi":{"prime":-0.40,"fixed":4.70,"madad":3.05,"variable":4.15},"discount":{"prime":-0.50,"fixed":4.60,"madad":2.95,"variable":4.00},"yahav":{"prime":-0.55,"fixed":4.50,"madad":2.85,"variable":3.95},"igud":{"prime":-0.50,"fixed":4.55,"madad":2.92,"variable":4.02},"otzar":{"prime":-0.60,"fixed":4.45,"madad":2.80,"variable":3.90},"mercantile":{"prime":-0.45,"fixed":4.60,"madad":2.95,"variable":4.05}}`;
+    const r1 = await fetch("/api/chat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:800,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        messages:[{role:"user",content:ratesPrompt}] })
+    });
+    const d1 = await r1.json();
+    const t1 = d1.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    const parsed = JSON.parse(t1.replace(/```json|```/g,'').trim());
+    const now = new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    Object.keys(parsed).forEach(k => { liveRates[k] = { ...parsed[k], time:now }; });
+    lsBadge(1,'ok','✅ עודכן');
+    setDataStatus('live', now);
+  } catch(e) { lsBadge(1,'ok','⚠️ בסיס'); setDataStatus('static', null); }
+
+  // ── 2. Build personalized mix ──
+  lsBadge(2,'go','בונה...');
+  const pMap = { monthly:'תשלום חודשי נמוך', total:'עלות כוללת נמוכה', stability:'יציבות ודאות', flexibility:'גמישות לפירעון מוקדם' };
+  const rMap = { low:'שנאת סיכון גבוהה', medium:'סיכון בינוני', high:'מקבל סיכון', short:'אופק קצר — פירעון מוקדם צפוי' };
+  const iMap = { grow:'הכנסה צפויה לגדול', stable:'הכנסה יציבה', uncertain:'הכנסה לא ודאית', drop:'הכנסה עשויה לרדת' };
+  const lMap = { low:'נזילות נמוכה', medium:'נזילות בינונית', high:'נזילות גבוהה' };
+
+  const rateLines = BANKS.map(b => {
+    const r = getBR(b.id);
+    const src = liveRates[b.id] ? '(עדכני)' : '(בסיס)';
+    return `${b.name} ${src}: פריים מרווח ${r.prime}%, קל"צ ${r.fixed}%, קצ"מ ${r.madad}%, משתנה ${r.variable}%`;
+  }).join('\n');
+
+  const mixPrompt = `אתה יועץ משכנתאות ישראלי מנוסה. בנה 3 תמהילי משכנתא מותאמים לפרופיל:
+
+נתוני הלוואה:
+- הלוואה: ₪${loan.toLocaleString()}, נכס: ₪${price.toLocaleString()}, LTV: ${ltv}%
+- הכנסה חודשית נטו: ₪${income.toLocaleString()}
+- ריבית פריים: ${PRIME_BASE}%, אינפלציה: ${INFLATION}%
+
+פרופיל הלווה:
+- מה הכי חשוב: ${pMap[profile.priority]}
+- יחס לסיכון: ${rMap[profile.risk]}
+- שינוי הכנסה: ${iMap[profile.income]}
+- נזילות: ${lMap[profile.liquidity]}
+
+ריביות בנקים:
+${rateLines}
+
+חוקי בנק ישראל: עד 33% פריים. לפחות 33% ריבית קבועה (קל"צ/קצ"מ).
+
+הנחיות:
+- תמהיל 1 ("מומלץ"): מותאם במדויק לפרופיל
+- תמהיל 2 ("חלופה שמרנית"): יותר קבוע, פחות סיכון
+- תמהיל 3 ("חלופה חסכונית"): מינוף גבוה יותר, עלות כוללת נמוכה
+- לכל תמהיל — בחר את הבנק הזול ביותר מהרשימה
+- ה-reasoning יהיה אישי, ידבר על הפרופיל הספציפי, ויכלול מספר ממשי (כמה חוסכים לעומת חלופה)
+
+ענה JSON בלבד, ללא שום תוספת:
+{
+  "scenarios": [
+    {
+      "id": "recommended",
+      "label": "⭐ מומלץ לפרופיל שלך",
+      "bankId": "leumi",
+      "tracks": [{"type":"prime","pct":33,"years":25},{"type":"fixed","pct":33,"years":20},{"type":"madad","pct":34,"years":25}],
+      "reasoning": "הסבר אישי ומדויק 2-3 משפטים"
+    },
+    { "id":"conservative","label":"🛡️ שמרני","bankId":"otzar","tracks":[...],"reasoning":"..." },
+    { "id":"affordable","label":"💡 חסכוני","bankId":"yahav","tracks":[...],"reasoning":"..." }
+  ]
+}`;
+
+  let scenarios;
+  try {
+    const r2 = await fetch("/api/chat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:1500,
+        messages:[{role:"user",content:mixPrompt}] })
+    });
+    const d2 = await r2.json();
+    const t2 = d2.content.map(c=>c.text||'').join('');
+    scenarios = JSON.parse(t2.replace(/```json|```/g,'').trim()).scenarios;
+    lsBadge(2,'ok','✅ בנוי');
+  } catch(e) {
+    scenarios = [
+      { id:'recommended', label:'⭐ מומלץ לפרופיל שלך', bankId:'leumi',
+        tracks:[{type:'prime',pct:33,years:25},{type:'fixed',pct:33,years:20},{type:'madad',pct:34,years:25}],
+        reasoning:'תמהיל קלאסי מאוזן — 33% פריים, 33% קל"צ, 34% קצ"מ. מתאים לפרופיל שלך.' },
+      { id:'conservative', label:'🛡️ שמרני', bankId:'otzar',
+        tracks:[{type:'fixed',pct:67,years:20},{type:'prime',pct:33,years:25}],
+        reasoning:'יציבות מקסימלית — 67% ריבית קבועה, ללא הפתעות.' },
+      { id:'affordable', label:'💡 חסכוני', bankId:'yahav',
+        tracks:[{type:'prime',pct:33,years:25},{type:'variable',pct:34,years:20},{type:'madad',pct:33,years:25}],
+        reasoning:'מינוף ריבית נמוכה — עלות כוללת נמוכה יותר לאורך זמן.' },
+    ];
+    lsBadge(2,'ok','⚠️ בסיס');
+  }
+
+  // ── 3. Compute metrics ──
+  lsBadge(3,'go','מחשב...');
+  function calcSc(sc) {
+    const br = getBR(sc.bankId);
+    let monthly=0, cost=0, details=[];
+    sc.tracks.forEach(t => {
+      const prin = loan * t.pct / 100;
+      let r;
+      if (t.type==='prime')    r = PRIME_BASE + br.prime;
+      else if (t.type==='fixed')    r = br.fixed;
+      else if (t.type==='madad')    r = br.madad + INFLATION;
+      else                           r = br.variable;
+      const m = mp(prin, r, t.years), tot = m * t.years * 12;
+      monthly += m; cost += tot;
+      details.push({ ...t, eff:r, m, tot, int:tot-prin, prin });
+    });
+    const bank = BANKS.find(b=>b.id===sc.bankId) || BANKS[0];
+    return { ...sc, bank, br, monthly, cost, interest:cost-loan, pti:monthly/income*100, ltv:+ltv, details };
+  }
+  const computed = scenarios.map(calcSc);
+  const cheapest = computed.reduce((a,b) => a.cost<b.cost ? a : b);
+  lsBadge(3,'ok','✅ נבחר');
+
+  // ── 4. AI analysis ──
+  lsBadge(4,'go','מנתח...');
+  const rec = computed[0]; // recommended
+  const aiPrompt = `יועץ משכנתאות ישראלי מנוסה.
+
+פרופיל הלווה:
+- מה חשוב: ${pMap[profile.priority]}, סיכון: ${rMap[profile.risk]}
+- הכנסה: ${iMap[profile.income]}, נזילות: ${lMap[profile.liquidity]}
+
+התמהיל המומלץ (${rec.label}):
+- בנק: ${rec.bank.name}
+- תשלום חודשי: ${fmt(rec.monthly)}, PTI: ${rec.pti.toFixed(1)}%, LTV: ${ltv}%
+- עלות כוללת: ${fmt(rec.cost)}, ריבית כוללת: ${fmt(rec.interest)}
+- מסלולים: ${rec.details.map(t=>`${TN[t.type]} ${t.pct}% בריבית ${t.eff.toFixed(2)}% ל-${t.years} שנים`).join(' | ')}
+- ריבית פריים: ${PRIME_BASE}%, אינפלציה: ${INFLATION}%
+
+ענה JSON בלבד:
+{
+  "summary": "2-3 משפטים על התמהיל והתאמתו לפרופיל",
+  "risks": ["סיכון ספציפי 1","סיכון ספציפי 2"],
+  "tips": ["טיפ חיסכון 1","טיפ חיסכון 2"],
+  "recommendation": "המלצה אחת ספציפית ומעשית",
+  "bankQuestion": "שאלה אחת חדה שיש לשאול את הבנק"
+}`;
+
+  let aiData = null;
+  try {
+    const r4 = await fetch("/api/chat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:900,
+        messages:[{role:"user",content:aiPrompt}] })
+    });
+    const d4 = await r4.json();
+    const t4 = d4.content.map(c=>c.text||'').join('');
+    aiData = JSON.parse(t4.replace(/```json|```/g,'').trim());
+    lsBadge(4,'ok','✅ מוכן');
+  } catch(e) { lsBadge(4,'ok','⚠️'); }
+
+  wizardData = { computed, cheapest, loan, price, income, status, ltv:+ltv, aiData };
+  await new Promise(r => setTimeout(r, 400));
+
+  renderResults();
+  document.getElementById('screen-loading').classList.remove('active');
+  showScreen('screen-results');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ──────────────────────────────
+// RENDER RESULTS
+// ──────────────────────────────
+function renderResults() {
+  const { computed, cheapest, loan, income, ltv, aiData } = wizardData;
+
+  // ── Pills ──
+  const pillsEl = document.getElementById('sc-pills');
+  pillsEl.innerHTML = '';
+  computed.forEach((sc, i) => {
+    const pill = document.createElement('button');
+    const isWinner = sc.id === cheapest.id;
+    pill.className = 'sc-pill' + (isWinner?' winner':'') + (i===0?' active':'');
+    pill.textContent = sc.label + (isWinner ? ' 👑' : '');
+    pill.onclick = () => selectSc(i);
+    pillsEl.appendChild(pill);
+  });
+
+  // ── Panels ──
+  const panelsEl = document.getElementById('sc-panels');
+  panelsEl.innerHTML = '';
+
+  computed.forEach((sc, i) => {
+    const isWinner = sc.id === cheapest.id;
+    const ptiCls  = sc.pti > 40 ? 'rd' : sc.pti > 33 ? '' : 'gr';
+    const ltvCls  = ltv > 75 ? 'rd' : ltv < 60 ? 'gr' : '';
+    const ptiAlCls = sc.pti > 40 ? 'd' : sc.pti > 33 ? 'w' : 's';
+    const ptiAlTxt = sc.pti > 40
+      ? 'PTI ' + sc.pti.toFixed(1) + '% — מעל 40%, הבנק עלול לסרב'
+      : sc.pti > 33
+      ? 'PTI ' + sc.pti.toFixed(1) + '% — מעל 33% המומלץ'
+      : 'PTI ' + sc.pti.toFixed(1) + '% — תקין';
+
+    const panel = document.createElement('div');
+    panel.className = 'sc-panel' + (i===0 ? ' active' : '');
+    panel.id = 'sc-panel-' + i;
+
+    // Build sections as separate HTML strings then join
+    const bankHTML =
+      '<div class="bank-badge' + (isWinner?' winner-bank':'') + '">' +
+        '<div class="bb-logo">' + sc.bank.logo + '</div>' +
+        '<div class="bb-info">' +
+          '<div class="bb-name">' + sc.bank.name + '</div>' +
+          '<div class="bb-sub">בנק מומלץ לתמהיל זה' + (liveRates[sc.bank.id]?' · ריביות AI עדכניות':'') + '</div>' +
+        '</div>' +
+        (isWinner ? '<div class="bb-tag">👑 זול ביותר</div>' : '') +
+      '</div>';
+
+    const alertHTML = '<div class="al ' + ptiAlCls + '">' + ptiAlTxt + '</div>';
+
+    const metricsHTML =
+      '<div class="metrics-row">' +
+        '<div class="metric hl"><div class="ml">תשלום חודשי</div><div class="mv">' + fmt(sc.monthly) + '</div></div>' +
+        '<div class="metric"><div class="ml">עלות כוללת</div><div class="mv">' + fmt(sc.cost) + '</div></div>' +
+        '<div class="metric"><div class="ml">סה"כ ריבית</div><div class="mv" style="color:var(--rd)">' + fmt(sc.interest) + '</div></div>' +
+        '<div class="metric ' + ptiCls + '"><div class="ml">PTI</div><div class="mv">' + sc.pti.toFixed(1) + '%</div></div>' +
+        '<div class="metric ' + ltvCls + '"><div class="ml">LTV</div><div class="mv">' + (+ltv).toFixed(1) + '%</div></div>' +
+      '</div>';
+
+    const tracksHTML =
+      '<div class="res-section">' +
+        '<div class="res-section-title">הרכב המסלולים</div>' +
+        '<div class="tracks-list">' +
+          sc.details.map(t =>
+            '<div class="track-row">' +
+              '<div class="tr-dot" style="background:' + TC[t.type] + '"></div>' +
+              '<div class="tr-name">' + TN[t.type] + '</div>' +
+              '<div class="tr-meta">' + t.pct + '% · ' + t.years + ' שנים</div>' +
+              '<div class="tr-rate">' + t.eff.toFixed(2) + '%</div>' +
+              '<div class="tr-pay">' + fmt(t.m) + '/ח\'</div>' +
+            '</div>'
+          ).join('') +
+        '</div>' +
+        '<div class="reasoning">' + (sc.reasoning||'') + '</div>' +
+      '</div>';
+
+    const amortHTML =
+      '<div class="res-section">' +
+        '<div class="res-section-title">לוח סילוקין שנתי</div>' +
+        '<div class="tbl-wrap"><table>' +
+          '<thead><tr><th>שנה</th><th>חודשי</th><th>קרן שנתית</th><th>ריבית שנתית</th><th>יתרת חוב</th><th>% שולם</th></tr></thead>' +
+          '<tbody>' + buildAmort(sc, loan) + '</tbody>' +
+        '</table></div>' +
+      '</div>';
+
+    const stressHTML =
+      '<div class="res-section">' +
+        '<div class="res-section-title">מבחן עמידות</div>' +
+        '<div class="stress-grid">' + buildStress(sc, income) + '</div>' +
+      '</div>';
+
+    const taxHTML =
+      '<div class="res-section">' +
+        '<div class="res-section-title">מס רכישה ועלויות סגירה</div>' +
+        '<div class="tax-list">' + buildTax(wizardData.price, wizardData.status) + '</div>' +
+      '</div>';
+
+    const aiInner = (aiData && i===0) ? renderAI(aiData)
+      : i===0 ? '<div class="skeleton" style="width:90%"></div><div class="skeleton" style="width:70%"></div>'
+      : '<div style="color:var(--td);font-size:13px;text-align:center;padding:12px">הניתוח זמין בתמהיל המומלץ</div>';
+
+    const aiHTML =
+      '<div class="res-section">' +
+        '<div class="res-section-title">ניתוח AI אישי</div>' +
+        '<div class="ai-box">' +
+          '<div class="ai-box-header">' +
+            '<div class="ai-icon-sm">🤖</div>' +
+            '<div>' +
+              '<div style="font-weight:700;font-size:15px">יועץ משכנתאות AI</div>' +
+              '<div style="font-size:12px;color:var(--tm)">מבוסס על הפרופיל האישי שלך</div>' +
+            '</div>' +
+          '</div>' +
+          '<div id="ai-content-' + i + '">' + aiInner + '</div>' +
+          (i===0 ?
+            '<div class="q-input-wrap">' +
+              '<input type="text" id="ai-q" placeholder="שאל שאלה נוספת...">' +
+              '<button class="q-send" onclick="sendAiQ()">שלח</button>' +
+            '</div>' : '') +
+        '</div>' +
+      '</div>';
+
+    const ctaHTML =
+      '<div class="advisor-cta">' +
+        '<div class="advisor-cta-inner">' +
+          '<div class="advisor-cta-top">' +
+            '<div class="advisor-avatar">👨‍💼</div>' +
+            '<div>' +
+              '<div class="advisor-cta-title">הצעד הבא — יועץ משכנתאות אנושי</div>' +
+              '<div class="advisor-cta-sub">ה-AI עשה את העבודה הראשונית — עכשיו יועץ מוסמך יבדוק את ההצעות מול הבנקים, ינהל עבורכם משא ומתן, ויחסוך לכם עשרות אלפי שקלים.</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="price-tag">' +
+            '<div>' +
+              '<div class="price-orig">מחיר רגיל: ₪3,500</div>' +
+              '<div style="display:flex;align-items:baseline;gap:6px">' +
+                '<div class="price-new">₪1,990</div>' +
+                '<div class="price-label">למשתמשי המערכת</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="price-badge">חיסכון של ₪1,510</div>' +
+          '</div>' +
+          '<div class="advisor-perks">' +
+            '<div class="perk"><div class="perk-icon">✅</div>ניהול משא ומתן מול הבנקים</div>' +
+            '<div class="perk"><div class="perk-icon">✅</div>השוואת הצעות אמיתיות</div>' +
+            '<div class="perk"><div class="perk-icon">✅</div>ליווי עד חתימת חוזה</div>' +
+            '<div class="perk"><div class="perk-icon">✅</div>פגישה ראשונה ללא עלות</div>' +
+            '<div class="perk"><div class="perk-icon">✅</div>יועץ מוסמך רישיון בנק ישראל</div>' +
+            '<div class="perk"><div class="perk-icon">✅</div>זמינות מלאה בוואטסאפ</div>' +
+          '</div>' +
+          '<div class="advisor-cta-actions">' +
+            '<button class="cta-btn-primary" onclick="openModal()">📞 אני רוצה יועץ — השאירו פרטים</button>' +
+            '<button class="cta-btn-secondary" onclick="openModal()">קבל שיחת היכרות חינם</button>' +
+          '</div>' +
+          '<div class="advisor-guarantee">🔒 ללא התחייבות · פרטיות מלאה · יועץ מורשה בנק ישראל</div>' +
+        '</div>' +
+      '</div>';
+
+    panel.innerHTML = bankHTML + alertHTML + metricsHTML + tracksHTML + amortHTML + stressHTML + taxHTML + aiHTML + ctaHTML;
+    panelsEl.appendChild(panel);
+  });
+}
+
+function renderAI(d) {
+  if (!d) return '<div style="color:var(--td);font-size:13px">לא זמין</div>';
+  return `
+    <div style="font-size:13px;line-height:1.8;margin-bottom:10px">${d.summary||''}</div>
+    ${d.risks?.length ? `<div class="ai-section-lbl r">⚠️ סיכונים</div>${d.risks.map(r=>`<div class="ai-point"><span class="dot">▸</span><span>${r}</span></div>`).join('')}` : ''}
+    ${d.tips?.length  ? `<div class="ai-section-lbl g">💡 טיפים לחיסכון</div>${d.tips.map(t=>`<div class="ai-point"><span class="dot" style="color:var(--gr)">▸</span><span>${t}</span></div>`).join('')}` : ''}
+    ${d.recommendation ? `<div class="ai-section-lbl a">⭐ המלצה</div><div class="highlight-box">${d.recommendation}</div>` : ''}
+    ${d.bankQuestion   ? `<div class="ai-section-lbl b">❓ שאלו את הבנק</div><div class="question-box">"${d.bankQuestion}"</div>` : ''}
+  `;
+}
+
+function selectSc(i) {
+  document.querySelectorAll('.sc-pill').forEach((p,idx)  => p.classList.toggle('active', idx===i));
+  document.querySelectorAll('.sc-panel').forEach((p,idx) => p.classList.toggle('active', idx===i));
+}
+
+// ──────────────────────────────
+// BUILD AMORTIZATION
+// ──────────────────────────────
+function buildAmort(sc, loan) {
+  const maxY = Math.max(...sc.details.map(t=>t.years));
+  let rems = sc.details.map(t=>t.prin);
+  let rows = '';
+  for (let yr=1; yr<=maxY; yr++) {
+    let aP=0, aI=0;
+    sc.details.forEach((t,i) => {
+      if (yr>t.years || rems[i]<=0) return;
+      const rate = t.eff/100/12; let rem = rems[i];
+      for (let m=0; m<12; m++) {
+        if (rem<=0) break;
+        const ip=rem*rate, pp=t.m-ip; aI+=ip; aP+=pp; rem=Math.max(0,rem-pp);
+      }
+      rems[i]=rem;
+    });
+    const totalRem = rems.reduce((s,x)=>s+x,0);
+    const paid = (1-totalRem/loan)*100;
+    rows += `<tr>
+      <td><strong>${yr}</strong></td>
+      <td>${fmt(sc.monthly)}</td>
+      <td style="color:var(--gr)">${fmt(aP)}</td>
+      <td style="color:var(--rd)">${fmt(aI)}</td>
+      <td><strong>${fmt(Math.max(0,totalRem))}</strong></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="bar-mini" style="width:${paid}px;max-width:60px"></div>${paid.toFixed(0)}%</div></td>
+    </tr>`;
+  }
+  return rows;
+}
+
+// ──────────────────────────────
+// BUILD STRESS
+// ──────────────────────────────
+function buildStress(sc, income) {
+  function sm(dp, di) {
+    return sc.details.reduce((s,t) => {
+      let rate = t.eff;
+      if (t.type==='prime')    rate += dp;
+      if (t.type==='madad')    rate = (t.eff-INFLATION) + (INFLATION+di);
+      if (t.type==='variable') rate += dp*.5;
+      return s + mp(t.prin, rate, t.years);
+    }, 0);
+  }
+  const cases = [
+    { label:'💰 כיום', dp:0, di:0, base:true },
+    { label:'📈 פריים +1%', dp:1, di:0 },
+    { label:'📈 פריים +2%', dp:2, di:0 },
+    { label:'🔥 פריים +3%', dp:3, di:0 },
+    { label:'📊 אינפלציה +3%', dp:0, di:3 },
+    { label:'💥 שניהם', dp:2, di:3 },
+  ];
+  return cases.map(c => {
+    const v = sm(c.dp, c.di);
+    const pti = v/income*100;
+    const cls = c.base ? '' : pti>40 ? 'd' : 'w';
+    const diff = c.base ? '' : `+${fmt(v-sc.monthly)}/ח'`;
+    return `<div class="stress-card ${cls}">
+      <div class="sc-title">${c.label}</div>
+      <div class="sc-val">${fmt(v)}</div>
+      <div class="sc-diff">${c.base ? 'PTI '+pti.toFixed(1)+'%' : diff+' · PTI '+pti.toFixed(1)+'%'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ──────────────────────────────
+// BUILD TAX
+// ──────────────────────────────
+function buildTax(price, status) {
+  let tax=0, rows=[];
+  if (status==='oleh') {
+    tax=price*.005; rows=[{l:'עולה חדש — 0.5%',a:tax}];
+  } else if (status==='first') {
+    const b=[{to:1978745,r:0},{to:2347225,r:.035},{to:6055695,r:.05},{to:20000000,r:.08}];
+    let prev=0;
+    b.forEach(br=>{
+      if(price<=prev) return;
+      const t=Math.min(price,br.to)-prev;
+      rows.push({l:`${(br.r*100).toFixed(1)}% על ₪${prev.toLocaleString()}–₪${Math.min(price,br.to).toLocaleString()}`,a:t*br.r});
+      tax+=t*br.r; prev=br.to;
+    });
+  } else {
+    const b=[{to:6055695,r:.08},{to:20000000,r:.10}]; let prev=0;
+    b.forEach(br=>{
+      if(price<=prev) return;
+      const t=Math.min(price,br.to)-prev;
+      rows.push({l:`${br.r*100}%`,a:t*br.r}); tax+=t*br.r; prev=br.to;
+    });
+  }
+  const extras=[
+    {l:'שכ"ט עו"ד (~0.5%)',a:price*.005+3000},
+    {l:'עמלת מתווך (~2%)',a:price*.02},
+    {l:'שמאי + רישום',a:4000},
+    {l:'פתיחת תיק בנק',a:500},
+  ];
+  const eTotal = extras.reduce((s,e)=>s+e.a,0);
+  return rows.map(r=>`<div class="tax-row"><span>${r.l}</span><span class="tv">${r.a===0?'₪0 (פטור)':fmt(r.a)}</span></div>`).join('')
+    + `<div class="tax-row tot"><span>מס רכישה</span><span class="tv">${fmt(tax)}</span></div>`
+    + extras.map(e=>`<div class="tax-row"><span>${e.l}</span><span class="tv">${fmt(e.a)}</span></div>`).join('')
+    + `<div class="tax-row tot"><span>עלויות נלוות</span><span class="tv">${fmt(eTotal)}</span></div>`
+    + `<div class="tax-row grand"><span>💰 עלות סגירה כוללת</span><span class="tv">${fmt(tax+eTotal)}</span></div>`;
+}
+
+// ──────────────────────────────
+// AI Q&A
+// ──────────────────────────────
+async function sendAiQ() {
+  const q = document.getElementById('ai-q').value.trim();
+  if (!q || !wizardData) return;
+  const box = document.getElementById('ai-content-0');
+  const { computed, loan, income, ltv } = wizardData;
+  const rec = computed[0];
+  box.innerHTML = `<div style="display:flex;gap:7px;color:var(--tm);font-size:13px">🤖 <span style="animation:pulse 1.4s infinite">•</span><span style="animation:pulse 1.4s .2s infinite">•</span><span style="animation:pulse 1.4s .4s infinite">•</span></div>`;
+  try {
+    const r = await fetch("/api/chat",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:700,
+        messages:[{role:"user",content:`יועץ משכנתאות ישראלי. הלוואה ${fmt(loan)}, חודשי ${fmt(rec.monthly)}, PTI ${rec.pti.toFixed(1)}%, LTV ${ltv}%.\nשאלה: ${q}\nענה עברית, 3-5 משפטים מקצועיים.`}]
+      })
+    });
+    const d = await r.json();
+    const text = d.content.map(c=>c.text||'').join('');
+    box.innerHTML = `
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:7px;padding:10px;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--tm);margin-bottom:3px">שאלתך:</div>
+        <div style="font-size:13px;font-style:italic">"${q}"</div>
+      </div>
+      <div style="font-size:13px;line-height:1.8">${text}</div>`;
+  } catch(e) {
+    box.innerHTML = `<div class="al d">שגיאה: ${e.message}</div>`;
+  }
+  document.getElementById('ai-q').value = '';
+}
+
+// ──────────────────────────────
+// ADVISOR MODAL
+// ──────────────────────────────
+function openModal() {
+  document.getElementById('advisor-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('advisor-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+document.getElementById('advisor-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function submitForm() {
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  if (!name || !phone || !email) {
+    alert('נא למלא שם, טלפון ומייל');
+    return;
+  }
+  const btn = document.getElementById('modal-submit-btn');
+  btn.textContent = 'שולח...';
+  btn.disabled = true;
+  // Simulate submission
+  setTimeout(() => {
+    document.getElementById('modal-form-state').style.display = 'none';
+    document.getElementById('modal-success-state').style.display = 'block';
+  }, 1200);
+}
+
+// ──────────────────────────────
+// DATA STATUS BAR
+// ──────────────────────────────
+function setDataStatus(state, time) {
+  const dot    = document.getElementById('dsb-dot');
+  const badge  = document.getElementById('dsb-source-badge');
+  const text   = document.getElementById('dsb-text');
+  const timeEl = document.getElementById('dsb-time');
+
+  if (state === 'live') {
+    dot.className   = 'dsb-indicator live';
+    badge.className = 'dsb-badge web';
+    badge.textContent = '🌐 נתונים מהאינטרנט בזמן אמת';
+    text.textContent  = 'ריביות עודכנו ע"י Gemini AI · מחפש אתרי בנקים ומקורות פיננסיים';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('he-IL', {day:'2-digit', month:'2-digit', year:'numeric'});
+    timeEl.textContent = 'עדכון אחרון: ' + dateStr + ' · ' + (time || now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}));
+  } else if (state === 'static') {
+    dot.className   = 'dsb-indicator static';
+    badge.className = 'dsb-badge static';
+    badge.textContent = '📋 נתוני בסיס';
+    text.textContent  = 'לא ניתן לטעון ריביות חיות — מוצגים נתוני בסיס טיפוסיים';
+    timeEl.textContent = 'לחץ "עדכן ריביות" לניסיון חוזר';
+  } else if (state === 'error') {
+    dot.className   = 'dsb-indicator error';
+    badge.className = 'dsb-badge error';
+    badge.textContent = '⚠️ שגיאת חיבור';
+    text.textContent  = 'בדוק את ה-GEMINI_API_KEY ב-Vercel';
+    timeEl.textContent = '';
+  }
+}
+
+async function refreshRates() {
+  const btn  = document.getElementById('dsb-refresh-btn');
+  const icon = document.getElementById('dsb-refresh-icon');
+  btn.disabled = true;
+  icon.className = 'spin';
+  icon.textContent = '↻';
+
+  const dot  = document.getElementById('dsb-dot');
+  const text = document.getElementById('dsb-text');
+  dot.className    = 'dsb-indicator';
+  text.textContent = 'מעדכן ריביות...';
+
+  const ratesPrompt = `יועץ משכנתאות ישראלי. ${new Date().toLocaleDateString('he-IL')}.
+חפש ריביות עדכניות למשכנתאות ישראל וענה JSON בלבד ללא כלום נוסף:
+{"poalim":{"prime":-0.45,"fixed":4.65,"madad":3.00,"variable":4.10},"leumi":{"prime":-0.50,"fixed":4.55,"madad":2.90,"variable":4.05},"mizrahi":{"prime":-0.40,"fixed":4.70,"madad":3.05,"variable":4.15},"discount":{"prime":-0.50,"fixed":4.60,"madad":2.95,"variable":4.00},"yahav":{"prime":-0.55,"fixed":4.50,"madad":2.85,"variable":3.95},"igud":{"prime":-0.50,"fixed":4.55,"madad":2.92,"variable":4.02},"otzar":{"prime":-0.60,"fixed":4.45,"madad":2.80,"variable":3.90},"mercantile":{"prime":-0.45,"fixed":4.60,"madad":2.95,"variable":4.05}}`;
+
+  try {
+    const r = await fetch("/api/chat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"gemini-2.5-flash", max_tokens:800,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        messages:[{role:"user",content:ratesPrompt}] })
+    });
+    const d = await r.json();
+    const t = d.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    const parsed = JSON.parse(t.replace(/```json|```/g,'').trim());
+    const now = new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    Object.keys(parsed).forEach(k => { liveRates[k] = { ...parsed[k], time:now }; });
+    setDataStatus('live', now);
+  } catch(e) {
+    setDataStatus('static', null);
+  }
+
+  btn.disabled = false;
+  icon.className = '';
+  icon.textContent = '↻';
+}
+
+// ──────────────────────────────
+// INIT
+// ──────────────────────────────
+wSync();
+</script>
+</body>
+</html>
