@@ -12,8 +12,9 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body;
+    const needsSearch = (body.tools || []).some(t => (t.type || '').includes('web_search'));
 
-    // Build Gemini contents
+    // Build contents
     const contents = (body.messages || []).map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{
@@ -25,25 +26,24 @@ export default async function handler(req, res) {
       }]
     }));
 
-    // Strengthen the last user message: demand JSON only
+    // Reinforce JSON instruction on last message
     if (contents.length > 0) {
       const last = contents[contents.length - 1];
-      const originalText = last.parts[0].text;
-      // If the prompt expects JSON, reinforce it strongly
-      if (originalText.includes('JSON') || originalText.includes('json')) {
-        last.parts[0].text = originalText +
-          '\n\n[CRITICAL: Return ONLY raw JSON. No markdown, no backticks, no explanation, no preamble. Start your response with { and end with }]';
+      const t = last.parts[0].text;
+      if (t.includes('JSON') || t.includes('json')) {
+        last.parts[0].text = t +
+          '\n\nIMPORTANT: Reply with ONLY the raw JSON object. No markdown. No backticks. No explanation. Start directly with { and end with }.';
       }
     }
 
-    const needsSearch = (body.tools || []).some(t => (t.type || '').includes('web_search'));
-
+    // NOTE: responseMimeType:'application/json' conflicts with googleSearch tool — do NOT use together
     const geminiBody = {
       contents,
       generationConfig: {
-        maxOutputTokens: body.max_tokens || 1000,
-        temperature: 0.4,
-        responseMimeType: 'application/json', // Force JSON output mode
+        maxOutputTokens: body.max_tokens || 1200,
+        temperature: 0.3,
+        // Only use JSON mode when NOT using search
+        ...(!needsSearch ? { responseMimeType: 'application/json' } : {}),
       },
       ...(needsSearch ? { tools: [{ googleSearch: {} }] } : {}),
     };
@@ -59,24 +59,21 @@ export default async function handler(req, res) {
 
     if (!geminiRes.ok) {
       console.error('Gemini error:', JSON.stringify(geminiData));
-      return res.status(geminiRes.status).json({
-        error: geminiData.error?.message || 'Gemini API error',
-        details: geminiData
-      });
+      return res.status(geminiRes.status).json({ error: geminiData.error?.message || 'Gemini error' });
     }
 
-    // Extract text — handle both text and JSON parts
+    // Extract text from response
     const parts = geminiData.candidates?.[0]?.content?.parts || [];
-    let text = parts.map(p => p.text || '').join('');
+    let text = parts.map(p => p.text || '').join('').trim();
 
-    // Clean up any markdown wrapping Gemini might still add
+    // Strip any markdown wrapping
     text = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
       .trim();
 
-    console.log('Gemini response length:', text.length, 'starts:', text.substring(0, 50));
+    console.log('Response preview:', text.substring(0, 80));
 
     return res.status(200).json({
       id: 'msg_gemini',
